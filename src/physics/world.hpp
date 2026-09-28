@@ -22,7 +22,7 @@ struct Drain {
 struct WorldParams {
     Vec2 gravity{0.0f, 980.0f};
     float particleRadius = 3.0f;   // collision radius of a fluid particle
-    float particleSpacing = 7.0f;  // typical rest spacing, used to size bodies
+    float particleSpacing = 6.0f;  // measured rest spacing, used to size bodies
     float wallFriction = 0.06f;
     float bodyFriction = 0.15f;
     float maxSpeed = 1100.0f;
