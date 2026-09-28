@@ -399,7 +399,7 @@ void App::drawHud() {
     if (s.state() == Session::State::Planning) {
         const char* msg = l.hint.empty() ? "Draw with the left mouse button." : l.hint.c_str();
         ui::textCentered(msg, kWidth * 0.5f, kHeight - 70, 22, palette::kText);
-        ui::textCentered("SPACE opens the taps   RMB erase   Z undo   R restart   F1 particles",
+        ui::textCentered("SPACE opens the taps   RMB erase   Z undo   R restart   F1 physics view",
                          kWidth * 0.5f, kHeight - 40, 18, palette::kMuted);
     }
 }
