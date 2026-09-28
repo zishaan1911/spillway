@@ -12,6 +12,27 @@ endif()
 option(SPILLWAY_BUILD_GAME "Build the game executable (needs raylib)" ON)
 option(SPILLWAY_BUILD_TESTS "Build the physics and game-logic tests" ON)
 
+if(MSVC)
+  set(SPILLWAY_WARNINGS /W4)
+else()
+  set(SPILLWAY_WARNINGS -Wall -Wextra -Wpedantic)
+endif()
+
+# Physics and game rules. No raylib in here, so the tests build anywhere.
+add_library(spillway_core INTERFACE)
+target_include_directories(spillway_core INTERFACE src)
+
+if(SPILLWAY_BUILD_TESTS)
+  enable_testing()
+  add_executable(spillway_tests
+    tests/main.cpp
+    tests/test_geometry.cpp)
+  target_include_directories(spillway_tests PRIVATE tests)
+  target_link_libraries(spillway_tests PRIVATE spillway_core)
+  target_compile_options(spillway_tests PRIVATE ${SPILLWAY_WARNINGS})
+  add_test(NAME spillway_tests COMMAND spillway_tests)
+endif()
+
 if(SPILLWAY_BUILD_GAME)
   include(FetchContent)
   set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
