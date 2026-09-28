@@ -29,8 +29,8 @@ solution, and the tests fail if it stops winning.
 
 | | |
 |---|---|
-| ![Title screen](docs/title.png) | ![Updraft](docs/updraft.png) |
-| ![Ski Jump](docs/ski_jump.png) | ![Cork](docs/cork.png) |
+| ![Title screen](docs/title.png) | ![Umbrella, with its spinning lid](docs/umbrella.png) |
+| ![Ski Jump: the cup runs away](docs/ski_jump.png) | ![Cork: dam it, float it](docs/cork.png) |
 
 ## Controls
 
