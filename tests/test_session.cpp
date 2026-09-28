@@ -161,3 +161,17 @@ TEST("a polyline is drawn as a single stroke") {
     CHECK(s.strokes().size() == 1u);
     CHECK_NEAR(s.inkUsed(), 150.0, 10.0);
 }
+
+TEST("water kept moving forever still ends the level") {
+    Level l = cupLevel();
+    l.walls.push_back({{560, 250}, {760, 170}, 6.0f});  // miss the cup
+    // A floor and a fan that keeps the spilled water churning.
+    l.walls.push_back({{0, 700}, {1280, 700}, 6.0f});
+    l.walls.push_back({{0, 700}, {0, 300}, 6.0f});
+    l.walls.push_back({{1280, 700}, {1280, 300}, 6.0f});
+    l.zones.push_back({{{0, 560}, {1280, 700}}, {0.0f, -1400.0f}});
+    Session s(l);
+    s.release();
+    for (int i = 0; i < 60 * 30 && s.state() == Session::State::Flowing; ++i) s.update();
+    CHECK(s.state() == Session::State::Lost);
+}
