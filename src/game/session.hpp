@@ -47,6 +47,9 @@ public:
     void endStroke();
     bool drawing() const { return drawing_; }
     const std::vector<Stroke>& strokes() const { return strokes_; }
+    // Removes the stroke passing nearest to p (within reach), refunding its ink.
+    bool eraseAt(Vec2 p, float reach = 12.0f);
+    void undo();
     float inkUsed() const;
     float inkLeft() const { return level_.ink - inkUsed(); }
 

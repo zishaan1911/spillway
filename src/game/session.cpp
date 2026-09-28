@@ -77,6 +77,32 @@ void Session::endStroke() {
     if (strokes_.back().points.size() < 2) strokes_.pop_back();
 }
 
+bool Session::eraseAt(Vec2 p, float reach) {
+    if (drawing_ || state_ == State::Won || state_ == State::Lost) return false;
+    int best = -1;
+    float bestDist = reach + kStrokeRadius;
+    for (size_t k = 0; k < strokes_.size(); ++k) {
+        const auto& pts = strokes_[k].points;
+        for (size_t i = 1; i < pts.size(); ++i) {
+            const float d = distanceToSegment(p, pts[i - 1], pts[i]);
+            if (d < bestDist) {
+                bestDist = d;
+                best = static_cast<int>(k);
+            }
+        }
+    }
+    if (best < 0) return false;
+    strokes_.erase(strokes_.begin() + best);
+    rebuildWalls();
+    return true;
+}
+
+void Session::undo() {
+    if (drawing_ || strokes_.empty() || state_ == State::Won || state_ == State::Lost) return;
+    strokes_.pop_back();
+    rebuildWalls();
+}
+
 void Session::release() {
     if (state_ == State::Planning) state_ = State::Flowing;
 }
