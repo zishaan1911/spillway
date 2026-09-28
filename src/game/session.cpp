@@ -12,6 +12,7 @@ Session::Session(const Level& level) : level_(level) {
     for (const Aabb& d : level_.drains) world_.drains.push_back({d});
     for (const ZoneDef& z : level_.zones) world_.zones.push_back({z.area, z.accel});
     for (const BallDef& b : level_.balls) world_.addDisc(b.pos, b.radius, b.density);
+    for (const MoverDef& m : level_.movers) world_.movers.emplace_back(m.walls, m.motion);
     rebuildWalls();
 }
 
@@ -126,11 +127,20 @@ void Session::release() {
     if (state_ == State::Planning) state_ = State::Flowing;
 }
 
+Aabb Session::goalArea(size_t i) const {
+    const GoalDef& g = level_.goals[i];
+    if (g.mover < 0) return g.area;
+    const Vec2 t = world_.movers[static_cast<size_t>(g.mover)].translation();
+    return {g.area.min + t, g.area.max + t};
+}
+
 int Session::countInGoals() const {
+    std::vector<Aabb> areas;
+    for (size_t i = 0; i < level_.goals.size(); ++i) areas.push_back(goalArea(i));
     int count = 0;
     for (const Vec2& p : world_.fluid.pos) {
-        for (const GoalDef& g : level_.goals) {
-            if (g.area.contains(p)) {
+        for (const Aabb& a : areas) {
+            if (a.contains(p)) {
                 ++count;
                 break;
             }
@@ -155,7 +165,7 @@ void Session::judge() {
     if (inGoal_ >= level_.target) {
         if (holdTimer_ == 0.0f) holdStart_ = elapsed_;
         holdTimer_ += kFrameDt;
-        if (holdTimer_ >= kHoldTime) {
+        if (holdTimer_ >= level_.hold) {
             finishTime_ = holdStart_;
             state_ = State::Won;
             if (drawing_) endStroke();

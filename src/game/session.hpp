@@ -25,7 +25,6 @@ public:
     static constexpr Aabb kArena{{0.0f, 0.0f}, {1280.0f, 720.0f}};
     static constexpr float kStrokeRadius = 5.0f;
     static constexpr float kStrokeStep = 10.0f;  // distance between stroke points
-    static constexpr float kHoldTime = 1.0f;     // goal must stay full this long
     static constexpr float kSettleTime = 2.5f;   // stillness before declaring a loss
     static constexpr float kSettleSpeed = 12.0f;
     static constexpr float kDryTimeout = 15.0f;  // after the taps run dry
@@ -60,11 +59,14 @@ public:
     float inkUsed() const;
     float inkLeft() const { return level_.ink - inkUsed(); }
 
+    // Where goal i is right now; goals can ride on movers.
+    Aabb goalArea(size_t i) const;
+
     int inGoal() const { return inGoal_; }
     float elapsed() const { return elapsed_; }
 
     // 0..1 while the goal is full and the win is being confirmed.
-    float holdProgress() const { return holdTimer_ / kHoldTime; }
+    float holdProgress() const { return holdTimer_ / level_.hold; }
     // Time from release until the goal first filled, for the winning fill.
     float finishTime() const { return finishTime_; }
     const std::string& lossReason() const { return lossReason_; }
