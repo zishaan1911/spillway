@@ -154,3 +154,10 @@ TEST("no drawing after the level is decided") {
     CHECK(s.state() == Session::State::Won);
     CHECK(!s.beginStroke({300, 300}));
 }
+
+TEST("a polyline is drawn as a single stroke") {
+    Session s(cupLevel());
+    s.drawPolyline({{300, 300}, {400, 300}, {400, 350}});
+    CHECK(s.strokes().size() == 1u);
+    CHECK_NEAR(s.inkUsed(), 150.0, 10.0);
+}
