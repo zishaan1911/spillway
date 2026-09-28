@@ -123,6 +123,9 @@ void App::run() {
 bool App::capture(const CaptureRequest& request) {
     if (request.level >= levels_.size()) return false;
     startLevel(request.level);
+    if (request.solved) {
+        for (const auto& stroke : session_->level().solution) session_->drawPolyline(stroke);
+    }
     session_->release();
     const int frames = static_cast<int>(request.seconds / Session::kFrameDt);
     for (int i = 0; i < frames; ++i) session_->update();

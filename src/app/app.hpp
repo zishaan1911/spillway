@@ -17,6 +17,7 @@ struct CaptureRequest {
     size_t level = 0;
     float seconds = 4.0f;
     std::string file = "capture.png";
+    bool solved = false;  // draw the level's reference solution first
 };
 
 class App {
