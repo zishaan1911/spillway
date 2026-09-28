@@ -53,10 +53,12 @@ void drawZone(const ZoneDef& z, float time) {
 
 void drawGoal(const GoalDef& g, float fill, float hold) {
     const Rectangle r = toRect(g.area);
-    DrawRectangleRec(r, Fade(palette::kGoal, 0.07f + 0.1f * hold));
-    // Target line at the height the goal would fill to.
-    const float level = r.y + r.height * (1.0f - std::clamp(fill, 0.0f, 1.0f));
-    DrawLineEx({r.x, level}, {r.x + r.width, level}, 2.0f, Fade(palette::kGoal, 0.5f));
+    DrawRectangleRec(r, Fade(palette::kGoal, 0.07f + 0.12f * hold));
+    // Progress bar along the bottom edge; it pulses while the win is confirmed.
+    const float f = std::clamp(fill, 0.0f, 1.0f);
+    const Color bar = hold > 0.0f ? ColorBrightness(palette::kGoal, 0.3f * hold) : palette::kGoal;
+    DrawRectangleRec({r.x, r.y + r.height + 8.0f, r.width, 4.0f}, Fade(palette::kGoal, 0.2f));
+    DrawRectangleRec({r.x, r.y + r.height + 8.0f, r.width * f, 4.0f}, bar);
     // Dashed outline.
     const float dash = 8.0f;
     const Color c = Fade(palette::kGoal, 0.7f);
@@ -76,14 +78,18 @@ void drawEmitter(const Emitter& e) {
     const EmitterDef& d = e.def();
     const float pipeWidth = d.width + 14.0f;
     const Vec2 side = perp(d.dir) * (pipeWidth * 0.5f);
-    const Vec2 back = d.pos - d.dir * 34.0f;
     const Vec2 mouth = d.pos - d.dir * 4.0f;
+    // The pipe runs back off the edge of the screen; the frame clips it.
+    const Vec2 back = mouth - d.dir * 2000.0f;
+    DrawLineEx(toRl(back), toRl(mouth), pipeWidth + 3.0f, palette::kWallEdge);
     DrawLineEx(toRl(back), toRl(mouth), pipeWidth, palette::kWall);  // a thick line is a rotated box
-    DrawLineEx(toRl(mouth - side), toRl(mouth + side), 4.0f, palette::kWallEdge);
-    // Remaining fluid gauge along the pipe.
+    DrawLineEx(toRl(mouth - side * 1.2f), toRl(mouth + side * 1.2f), 8.0f, palette::kWallEdge);
+    // Remaining fluid, as a gauge running up the pipe from the mouth.
     const float frac = static_cast<float>(e.remaining()) / std::max(1, d.total);
-    const Vec2 g0 = back + d.dir * 6.0f;
-    DrawLineEx(toRl(g0), toRl(g0 + d.dir * (22.0f * frac)), 5.0f, Fade(SKYBLUE, 0.9f));
+    const Vec2 g0 = mouth - d.dir * 10.0f;
+    if (frac > 0.0f) {
+        DrawLineEx(toRl(g0), toRl(g0 - d.dir * (60.0f * frac)), d.width * 0.5f, Fade(SKYBLUE, 0.8f));
+    }
 }
 
 void drawBall(const Body& b) {
