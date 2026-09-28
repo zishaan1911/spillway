@@ -325,6 +325,12 @@ void App::drawPlay() {
     const Session& s = *session_;
     drawSession(s);
     drawHud();
+    if (!paused_ && (s.state() == Session::State::Planning || s.state() == Session::State::Flowing)) {
+        // Cursor ring: amber where a stroke can go, red where it cannot.
+        const bool ok = s.canDrawAt(mouse_) && s.inkLeft() > 0.0f;
+        DrawCircleLinesV(toRl(mouse_), Session::kStrokeRadius + 3.0f,
+                         ok ? palette::kStroke : palette::kNoDraw);
+    }
     if (paused_) drawPause();
     if (s.state() == Session::State::Won || s.state() == Session::State::Lost) drawResult();
 }
