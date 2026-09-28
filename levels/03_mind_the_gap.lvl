@@ -2,7 +2,7 @@ name  Mind the Gap
 hint  The floor has holes in it. Bridge them.
 ink    360
 target 280
-par    16
+par    10
 
 emitter 150 90   0 1   170 650 36
 

@@ -2,7 +2,7 @@ name  First Drop
 hint  Draw a ramp from the pipe to the cup.
 ink    800
 target 250
-par    12
+par    9
 
 emitter 300 90   0 1   160 500 36
 

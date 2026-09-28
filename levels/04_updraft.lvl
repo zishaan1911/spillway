@@ -2,7 +2,7 @@ name  Updraft
 hint  The fan can lift water. Feed it.
 ink    600
 target 260
-par    18
+par    11
 
 emitter 170 90   0 1   170 650 36
 

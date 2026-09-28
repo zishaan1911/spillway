@@ -2,7 +2,7 @@ name  Umbrella
 hint  Something is keeping the cup dry. Catch what runs off the lid.
 ink    400
 target 260
-par    14
+par    7
 
 emitter 660 90   0 1   170 650 36
 
