@@ -1,15 +1,31 @@
 # Spillway
 
-A 2D fluid puzzle game in C++20. Draw walls to guide the water into the goal.
-The water is a particle simulation written from scratch. Nothing is scripted:
-whatever shape you draw, the water does whatever the physics says it does.
+A 2D fluid puzzle game in C++20, built to make you angry. Draw walls to guide
+the water into the goal. The water is a particle simulation written from
+scratch. Nothing is scripted: whatever shape you draw, the water does whatever
+the physics says it does. Usually that is "almost".
 
 ![Cascade, the last level, solved](docs/cascade.gif)
 
-Ten levels, three stars each: fill the goal, use at most half the ink, and
-beat par. Along the way you meet fans that lift water up walls, floors with
-holes in them, a cork that has to be floated out of a cup, and a chasm you can
-only cross by jumping it.
+Ten levels, three stars each: fill the goal and **keep it full for three
+seconds**, use at most half the ink, and beat par. Every target sits within
+about ten percent of what the reference solution manages, so a slightly worse
+line comes up a few drops short, and the game tells you by exactly how many.
+
+What you are up against:
+
+- **Moving walls.** Spinning lids, sliding doors, paddles over the cup mouth,
+  and cups that slide around under your stream.
+- **No take-backs.** Once the taps open you cannot erase or undo, and ink you
+  spend is gone even if you erase the stroke before then.
+- **Walls that lie.** Some walls are fake. Some floors have holes you cannot
+  see. One cup runs away when the water gets close, and one hint is lying.
+- **A spill counter.** Every loss, and every restart once the water is
+  running, is counted per level and shown on the menu. The loss screen names
+  your margin: *"297 / 305. So close. Not close enough."*
+
+The one promise: every level is beatable. Each ships with a reference
+solution, and the tests fail if it stops winning.
 
 | | |
 |---|---|
@@ -21,9 +37,9 @@ only cross by jumping it.
 | Input | Action |
 |---|---|
 | Left mouse | Draw a wall |
-| Right mouse | Erase a wall |
+| Right mouse | Erase a wall (only before the taps open, no refund) |
 | Space | Open the taps / continue |
-| Z | Undo the last wall |
+| Z | Undo the last wall (same rules) |
 | R | Restart |
 | Esc / P | Pause |
 | F1 | Physics view: raw particles coloured by density, plus solver stats |
@@ -83,6 +99,13 @@ Each frame (1/60 s) runs four substeps:
 7. **Viscosity.** Approaching pairs exchange a radial impulse that is linear
    plus quadratic in their closing speed, capped so it never reverses them.
 
+Moving walls are kinematic groups of capsules that slide, spin, or shift once
+when water reaches a trigger. They are posed from the world clock at every
+substep, and contacts are solved relative to the wall's own surface velocity.
+A paddle therefore carries water with it instead of just shoving it aside,
+and a rising platform lifts a ball resting on it. The tunnelling guard works
+in the wall's frame too, so a fast sweep cannot pass through a particle.
+
 Balls are rigid discs with mass, rotation, restitution and Coulomb friction.
 Water and balls are coupled both ways. When a particle hits a disc, its
 velocity relative to the moving surface loses the inward part. The disc gets
@@ -96,6 +119,8 @@ Things the tests pin down:
 - a dam break settles without losing or exploding particles
 - doubling the water in a tank doubles its depth (near-incompressibility)
 - light discs float and heavy discs sink
+- a sliding paddle sweeps water across a tank without losing any
+- every mover path, and its surface velocity, matches its own derivative
 - the grid neighbour search matches brute force
 - the collider broadphase never misses a wall within reach
 - every shipped level is won by its reference solution and **not** won with
@@ -113,8 +138,8 @@ with a bright rim along the surface.
 ## Layout
 
 ```
-src/physics   vector maths, grids, fluid solver, rigid discs, contacts, world
-src/game      level format, emitters, session rules, saved progress
+src/physics   vector maths, grids, fluid solver, rigid discs, movers, contacts, world
+src/game      level format, emitters, session rules, taunts, saved progress
 src/render    metaball fluid renderer and scene drawing (raylib)
 src/app       window, screens, HUD, input, capture/record modes
 levels        the ten levels as text files (format in levels/README.md)
