@@ -21,6 +21,7 @@ endif()
 # Physics and game rules. No raylib in here, so the tests build anywhere.
 add_library(spillway_core STATIC
   src/physics/collider_grid.cpp
+  src/physics/contact.cpp
   src/physics/fluid.cpp
   src/physics/particle_grid.cpp)
 target_include_directories(spillway_core PUBLIC src)
