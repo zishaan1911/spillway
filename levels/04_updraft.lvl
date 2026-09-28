@@ -1,0 +1,19 @@
+name  Updraft
+hint  The fan can lift water. Feed it.
+ink    600
+target 260
+par    18
+
+emitter 170 90   0 1   170 650 36
+
+# floor on the left
+chain 6   560 600   60 640
+# the fan column, blowing up the face of the shelf
+zone 600 150  154 540   450 -1500
+# a high shelf with the cup
+chain 6   760 260   760 380   1060 380   1060 120
+goal      767 290   286 84
+# the shelf's support, so water cannot sneak round the bottom
+wall 760 380  760 700  6
+
+solution 120 230  135 300  560 470
