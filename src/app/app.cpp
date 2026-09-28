@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "render/scene.hpp"
+#include "rlgl.h"
 
 namespace spill {
 
@@ -141,6 +142,7 @@ bool App::capture(const CaptureRequest& request) {
 
     Image img = LoadImageFromTexture(frame_.texture);
     ImageFlipVertical(&img);
+    ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8);  // see the note in tick()
     const bool ok = ExportImage(img, request.file.c_str());
     UnloadImage(img);
     return ok;
@@ -171,10 +173,16 @@ void App::tick() {
     // frame's, so it is rendered first and composited in drawPlay.
     BeginDrawing();
     ClearBackground(BLACK);
+    // Blending inside the frame leaves its alpha below 1 in places; the colour
+    // is already final, so copy it without blending.
+    rlDrawRenderBatchActive();
+    rlDisableColorBlend();
     DrawTexturePro(frame_.texture, {0, 0, static_cast<float>(kWidth), -static_cast<float>(kHeight)},
                    {viewport_.offset.x, viewport_.offset.y, kWidth * viewport_.scale,
                     kHeight * viewport_.scale},
                    {0, 0}, 0.0f, WHITE);
+    rlDrawRenderBatchActive();
+    rlEnableColorBlend();
     EndDrawing();
 
     applyPending();
