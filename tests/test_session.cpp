@@ -82,3 +82,34 @@ TEST("a click without a drag leaves no stroke") {
     CHECK(s.strokes().empty());
     CHECK(s.inkUsed() == 0.0f);
 }
+
+TEST("erasing a stroke refunds its ink and removes its walls") {
+    Session s(cupLevel());
+    s.beginStroke({300, 300});
+    s.extendStroke({400, 300});
+    s.endStroke();
+    s.beginStroke({300, 400});
+    s.extendStroke({300, 450});
+    s.endStroke();
+    CHECK(!s.eraseAt({350, 350}));  // nowhere near either stroke
+    CHECK(s.eraseAt({350, 305}));
+    CHECK(s.strokes().size() == 1u);
+    CHECK_NEAR(s.inkUsed(), 50.0, 1e-3);
+    CHECK(s.world().walls().size() == 3u + 5u);
+}
+
+TEST("undo removes the most recent stroke") {
+    Session s(cupLevel());
+    s.beginStroke({300, 300});
+    s.extendStroke({400, 300});
+    s.endStroke();
+    s.beginStroke({300, 400});
+    s.extendStroke({300, 450});
+    s.endStroke();
+    s.undo();
+    CHECK(s.strokes().size() == 1u);
+    CHECK_NEAR(s.inkUsed(), 100.0, 1e-3);
+    s.undo();
+    s.undo();  // harmless when empty
+    CHECK(s.strokes().empty());
+}
