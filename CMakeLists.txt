@@ -66,7 +66,8 @@ if(SPILLWAY_BUILD_GAME)
 
   add_executable(spillway
     src/app/main.cpp
-    src/render/fluid_renderer.cpp)
+    src/render/fluid_renderer.cpp
+    src/render/scene.cpp)
   target_link_libraries(spillway PRIVATE spillway_core raylib)
   target_compile_options(spillway PRIVATE ${SPILLWAY_WARNINGS})
 endif()
