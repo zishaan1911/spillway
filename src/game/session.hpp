@@ -8,6 +8,12 @@
 
 namespace spill {
 
+// A wall the player drew: a polyline turned into a chain of capsules.
+struct Stroke {
+    std::vector<Vec2> points;
+    float length = 0.0f;
+};
+
 // One attempt at a level: owns the physics world and applies the rules.
 // Nothing in here knows about rendering or input devices.
 class Session {
@@ -16,6 +22,8 @@ public:
 
     static constexpr float kFrameDt = 1.0f / 60.0f;
     static constexpr Aabb kArena{{0.0f, 0.0f}, {1280.0f, 720.0f}};
+    static constexpr float kStrokeRadius = 5.0f;
+    static constexpr float kStrokeStep = 10.0f;  // distance between stroke points
 
     explicit Session(const Level& level);
 
@@ -31,6 +39,17 @@ public:
     // Advances one fixed frame.
     void update();
 
+    // Drawing. A stroke grows in fixed steps while ink lasts and stops at
+    // no-draw regions and the arena edge.
+    bool canDrawAt(Vec2 p) const;
+    bool beginStroke(Vec2 p);
+    void extendStroke(Vec2 p);
+    void endStroke();
+    bool drawing() const { return drawing_; }
+    const std::vector<Stroke>& strokes() const { return strokes_; }
+    float inkUsed() const;
+    float inkLeft() const { return level_.ink - inkUsed(); }
+
     int inGoal() const { return inGoal_; }
     float elapsed() const { return elapsed_; }
 
@@ -41,6 +60,8 @@ private:
     Level level_;
     World world_;
     std::vector<Emitter> emitters_;
+    std::vector<Stroke> strokes_;
+    bool drawing_ = false;
     State state_ = State::Planning;
     int inGoal_ = 0;
     float elapsed_ = 0.0f;
