@@ -37,7 +37,8 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_contact.cpp
     tests/test_geometry.cpp
     tests/test_particle_grid.cpp
-    tests/test_rigid.cpp)
+    tests/test_rigid.cpp
+    tests/test_world.cpp)
   target_include_directories(spillway_tests PRIVATE tests)
   target_link_libraries(spillway_tests PRIVATE spillway_core)
   target_compile_options(spillway_tests PRIVATE ${SPILLWAY_WARNINGS})
