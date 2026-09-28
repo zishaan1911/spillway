@@ -50,6 +50,7 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_progress.cpp
     tests/test_rigid.cpp
     tests/test_session.cpp
+    tests/test_taunt.cpp
     tests/test_world.cpp)
   target_include_directories(spillway_tests PRIVATE tests)
   target_compile_definitions(spillway_tests PRIVATE
