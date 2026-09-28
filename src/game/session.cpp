@@ -153,7 +153,10 @@ void Session::update() {
     // and before release so balls can come to rest.
     world_.step(kFrameDt);
     inGoal_ = countInGoals();
-    if (state_ == State::Flowing) judge();
+    if (state_ == State::Flowing) {
+        peakInGoal_ = std::max(peakInGoal_, inGoal_);
+        judge();
+    }
 }
 
 void Session::judge() {
@@ -174,14 +177,14 @@ void Session::judge() {
     if (!tapsEmpty) return;
 
     if (static_cast<int>(world_.fluid.size()) < level_.target) {
-        lose("Not enough water left to fill the goal.");
+        lose(Loss::NotEnoughWater, "Not enough water left to fill the goal.");
         return;
     }
 
     // Water can circulate forever, say in a fan, without settling.
     dryTimer_ += kFrameDt;
     if (dryTimer_ >= kDryTimeout) {
-        lose("The water never made it.");
+        lose(Loss::NeverArrived, "The water never made it.");
         return;
     }
 
@@ -189,11 +192,12 @@ void Session::judge() {
     for (const Vec2& v : world_.fluid.vel) speedSum += length(v);
     const float meanSpeed = world_.fluid.size() ? speedSum / world_.fluid.size() : 0.0f;
     stillTimer_ = meanSpeed < kSettleSpeed ? stillTimer_ + kFrameDt : 0.0f;
-    if (stillTimer_ >= kSettleTime) lose("The water has settled short of the goal.");
+    if (stillTimer_ >= kSettleTime) lose(Loss::Settled, "The water has settled short of the goal.");
 }
 
-void Session::lose(std::string reason) {
+void Session::lose(Loss loss, std::string reason) {
     state_ = State::Lost;
+    loss_ = loss;
     lossReason_ = std::move(reason);
     if (drawing_) endStroke();
 }

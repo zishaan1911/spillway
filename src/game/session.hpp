@@ -20,6 +20,7 @@ struct Stroke {
 class Session {
 public:
     enum class State { Planning, Flowing, Won, Lost };
+    enum class Loss { None, NotEnoughWater, Settled, NeverArrived };
 
     static constexpr float kFrameDt = 1.0f / 60.0f;
     static constexpr Aabb kArena{{0.0f, 0.0f}, {1280.0f, 720.0f}};
@@ -72,6 +73,9 @@ public:
     // Time from release until the goal first filled, for the winning fill.
     float finishTime() const { return finishTime_; }
     const std::string& lossReason() const { return lossReason_; }
+    Loss loss() const { return loss_; }
+    // Most water that was ever in the goal at once, for rubbing it in.
+    int peakInGoal() const { return peakInGoal_; }
 
     // One star for finishing, one for using at most half the ink, one for
     // beating par. Zero unless the level is won.
@@ -81,7 +85,7 @@ private:
     void rebuildWalls();
     int countInGoals() const;
     void judge();
-    void lose(std::string reason);
+    void lose(Loss loss, std::string reason);
 
     Level level_;
     World world_;
@@ -98,6 +102,8 @@ private:
     float stillTimer_ = 0.0f;
     float dryTimer_ = 0.0f;
     std::string lossReason_;
+    Loss loss_ = Loss::None;
+    int peakInGoal_ = 0;
 };
 
 }  // namespace spill
