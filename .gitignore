@@ -1,0 +1,11 @@
+build/
+out/
+cmake-build-*/
+.idea/
+.vs/
+.vscode/
+*.exe
+*.o
+*.obj
+compile_commands.json
+progress.dat
