@@ -292,6 +292,11 @@ void App::updatePlay() {
     }
     if (paused_) return;
 
+    if (decided && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) {
+        const bool next = s.state() == Session::State::Won && current_ + 1 < levels_.size();
+        request(next ? Action::Start : Action::Restart, current_ + 1);
+        return;
+    }
     if (IsKeyPressed(KEY_SPACE)) s.release();
     if (IsKeyPressed(KEY_Z)) s.undo();
 
