@@ -79,3 +79,48 @@ TEST("solution lines become reference strokes") {
     CHECK(r.level->solution[0].size() == 3u);
     CHECK(!parseLevel(std::string(kMinimal) + "solution 1 2 3\n", "t").level);
 }
+
+TEST("moving groups collect their walls and goals") {
+    const std::string text = std::string(kMinimal) +
+                             "slide 200 0 3 0.25\n"
+                             "  chain 6  0 0  0 50  50 50\n"
+                             "  goal 5 5 40 40\n"
+                             "end\n"
+                             "spin 100 100 90\n"
+                             "  wall 50 100 150 100\n"
+                             "end\n"
+                             "shift 0 -100 0.5  0 0 10 10\n"
+                             "  wall 0 0 1 1\n"
+                             "end\n"
+                             "wall 9 9 10 10\n";
+    const ParseResult r = parseLevel(text, "t");
+    CHECK(r.level.has_value());
+    const Level& l = *r.level;
+    CHECK(l.movers.size() == 3u);
+    CHECK(l.movers[0].walls.size() == 2u);
+    CHECK_NEAR(l.movers[0].motion.phase, 0.25, 1e-6);
+    CHECK_NEAR(l.movers[1].motion.angularSpeed, 3.14159265 / 2.0, 1e-5);
+    CHECK(l.movers[2].motion.kind == Motion::Kind::Shift);
+    CHECK_NEAR(l.movers[2].motion.trigger.max.x, 10.0, 1e-6);
+    CHECK(l.goals.size() == 2u);
+    CHECK(l.goals[0].mover == -1);
+    CHECK(l.goals[1].mover == 0);
+    CHECK(l.walls.size() == 1u);  // only the one after the groups
+}
+
+TEST("fake walls and hold time") {
+    const ParseResult r = parseLevel(std::string(kMinimal) + "fake 0 0 10 0\nhold 3\n", "t");
+    CHECK(r.level.has_value());
+    CHECK(r.level->fakes.size() == 1u);
+    CHECK(r.level->walls.empty());
+    CHECK_NEAR(r.level->hold, 3.0, 1e-6);
+}
+
+TEST("malformed moving groups are rejected") {
+    const std::string base(kMinimal);
+    CHECK(!parseLevel(base + "slide 1 0 1\nwall 0 0 1 1\n", "t").level);          // no end
+    CHECK(!parseLevel(base + "end\n", "t").level);                                // stray end
+    CHECK(!parseLevel(base + "slide 1 0 1\nend\n", "t").level);                   // empty
+    CHECK(!parseLevel(base + "slide 1 0 1\nball 0 0 5\nend\n", "t").level);       // ball inside
+    CHECK(!parseLevel(base + "spin 0 0 10\ngoal 0 0 5 5\nend\n", "t").level);     // spinning goal
+}
