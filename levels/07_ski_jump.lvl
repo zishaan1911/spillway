@@ -1,18 +1,20 @@
 name  Ski Jump
-hint  You cannot build across the chasm. Jump it.
-ink    700
-target 260
-par    7
+hint  Jump the chasm. The cup will wait for you.
+ink    800
+target 305
+par    6
+hold   3
 
-emitter 140 90   0 1   320 650 36
+emitter 140 90   0 1   380 650 36
 
-# left bank
 chain 6   40 560   430 560   430 720
-# the chasm
 nodraw 440 60  250 660
 drain  430 640  250 80
-# right bank with a cup set into it; both sides slope into the cup
-chain 6   680 720   680 500   740 520   740 660   920 660   920 520   1240 440
-goal      747 540   166 114
+
+shift 220 0  0.8   690 60 120 660
+  chain 6   740 470   740 660   900 660   900 470
+  goal      747 490   146 164
+end
 
 solution 100 200  130 260  330 480  425 400
+solution 700 420  975 475
