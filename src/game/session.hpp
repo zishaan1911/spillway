@@ -45,7 +45,7 @@ public:
     void update();
 
     // Drawing. A stroke grows in fixed steps while ink lasts and stops at
-    // no-draw regions and the arena edge.
+    // no-draw regions, balls and the arena edge.
     bool canDrawAt(Vec2 p) const;
     bool beginStroke(Vec2 p);
     void extendStroke(Vec2 p);

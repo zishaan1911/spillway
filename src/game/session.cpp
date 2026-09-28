@@ -31,6 +31,11 @@ bool Session::canDrawAt(Vec2 p) const {
     for (const Aabb& a : level_.noDraw) {
         if (a.contains(p)) return false;
     }
+    // Drawing into a ball would shove it out of the new wall, which would make
+    // ink a way to move balls around.
+    for (const Body& b : world_.bodies.items) {
+        if (length(p - b.pos) < b.radius + kStrokeRadius) return false;
+    }
     return true;
 }
 
