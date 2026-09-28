@@ -14,6 +14,7 @@ namespace spill {
 // Renders one level to a PNG without opening an interactive session. Used to
 // produce the screenshots in the README.
 struct CaptureRequest {
+    bool menu = false;  // the title screen instead of a level
     size_t level = 0;
     float seconds = 4.0f;
     std::string file = "capture.png";

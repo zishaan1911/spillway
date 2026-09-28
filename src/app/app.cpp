@@ -123,20 +123,30 @@ void App::run() {
 }
 
 bool App::capture(const CaptureRequest& request) {
-    if (request.level >= levels_.size()) return false;
-    startLevel(request.level);
-    if (request.solved) {
-        for (const auto& stroke : session_->level().solution) session_->drawPolyline(stroke);
-    }
-    session_->release();
     const int frames = static_cast<int>(request.seconds / Session::kFrameDt);
-    for (int i = 0; i < frames; ++i) session_->update();
+    if (request.menu) {
+        screen_ = Screen::Menu;
+        for (int i = 0; i < frames; ++i) updateDemo();
+    } else {
+        if (request.level >= levels_.size()) return false;
+        startLevel(request.level);
+        if (request.solved) {
+            for (const auto& stroke : session_->level().solution) session_->drawPolyline(stroke);
+        }
+        session_->release();
+        for (int i = 0; i < frames; ++i) session_->update();
+    }
     time_ = request.seconds;
+    mouse_ = {-100.0f, -100.0f};  // no hover highlights
 
     BeginDrawing();
     BeginTextureMode(frame_);
     ClearBackground(palette::kBackground);
-    drawPlay();
+    if (screen_ == Screen::Menu) {
+        drawMenu();
+    } else {
+        drawPlay();
+    }
     EndTextureMode();
     EndDrawing();
 
