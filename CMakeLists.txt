@@ -75,6 +75,13 @@ if(SPILLWAY_BUILD_GAME)
     src/render/scene.cpp)
   target_link_libraries(spillway PRIVATE spillway_core raylib)
   target_compile_options(spillway PRIVATE ${SPILLWAY_WARNINGS})
+  if(WIN32)
+    # No console window behind the game in release builds.
+    set_target_properties(spillway PROPERTIES WIN32_EXECUTABLE $<CONFIG:Release>)
+    if(MSVC)
+      target_link_options(spillway PRIVATE $<$<CONFIG:Release>:/ENTRY:mainCRTStartup>)
+    endif()
+  endif()
 
   # Levels are plain text files loaded at runtime, so keep a copy beside the
   # executable. A separate target so edits are synced even without a relink.
