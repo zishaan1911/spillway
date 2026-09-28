@@ -1,0 +1,16 @@
+name  Twin Pipes
+hint  One pipe will not be enough.
+ink    800
+target 400
+par    6
+
+emitter 300 90    0 1   170 400 36
+emitter 980 90    0 1   170 400 36
+
+chain 6   570 520   570 665   710 665   710 520
+goal      577 540   126 118
+
+nodraw 500 60  280 340
+
+solution 250 240  265 290  560 480
+solution 1030 240  1015 290  720 480
