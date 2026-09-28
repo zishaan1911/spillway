@@ -1,0 +1,11 @@
+name  First Drop
+hint  Draw a ramp from the pipe to the cup.
+ink    500
+target 250
+par    12
+
+emitter 300 90   0 1   160 500
+
+# the cup
+chain 6   880 500   880 660   1010 660   1010 500
+goal      887 520   116 133
