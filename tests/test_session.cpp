@@ -1,0 +1,84 @@
+#include "game/session.hpp"
+#include "test.hpp"
+
+using namespace spill;
+
+namespace {
+
+// A funnel pouring into a cup directly below it.
+Level cupLevel() {
+    const ParseResult r = parseLevel(
+        "name Cup\n"
+        "ink 300\n"
+        "target 60\n"
+        "par 8\n"
+        "emitter 640 100  0 1  200 150\n"
+        "chain 6  600 500  600 640  680 640  680 500\n"
+        "goal 606 520 68 114\n"
+        "nodraw 0 0 200 200\n",
+        "cup");
+    return *r.level;
+}
+
+void runFrames(Session& s, int frames) {
+    for (int i = 0; i < frames; ++i) s.update();
+}
+
+}  // namespace
+
+TEST("nothing flows until the taps are opened") {
+    Session s(cupLevel());
+    runFrames(s, 30);
+    CHECK(s.world().fluid.size() == 0u);
+    CHECK(s.state() == Session::State::Planning);
+    s.release();
+    runFrames(s, 30);
+    CHECK(s.world().fluid.size() > 0u);
+    CHECK(s.elapsed() > 0.4f);
+}
+
+TEST("water poured into the cup is counted in the goal") {
+    Session s(cupLevel());
+    s.release();
+    runFrames(s, 240);
+    CHECK(s.inGoal() > 100);
+}
+
+TEST("strokes spend ink in fixed steps") {
+    Session s(cupLevel());
+    CHECK(s.beginStroke({300, 300}));
+    s.extendStroke({400, 300});
+    s.endStroke();
+    CHECK(s.strokes().size() == 1u);
+    CHECK_NEAR(s.inkUsed(), 100.0, 1e-3);
+    CHECK(s.strokes()[0].points.size() == 11u);
+    CHECK(s.world().walls().size() == 3u + 10u);
+}
+
+TEST("ink runs out part-way through a stroke") {
+    Session s(cupLevel());
+    s.beginStroke({300, 300});
+    s.extendStroke({300 + 1000, 300});
+    s.endStroke();
+    CHECK_NEAR(s.inkUsed(), 300.0, 1e-3);
+    CHECK(s.inkLeft() <= 1e-3f);
+    CHECK(!s.beginStroke({300, 400}));
+}
+
+TEST("strokes stop at no-draw regions") {
+    Session s(cupLevel());
+    CHECK(!s.beginStroke({100, 100}));
+    CHECK(s.beginStroke({300, 100}));
+    s.extendStroke({100, 100});
+    CHECK(!s.drawing());
+    CHECK(s.strokes()[0].points.back().x >= 200.0f);
+}
+
+TEST("a click without a drag leaves no stroke") {
+    Session s(cupLevel());
+    s.beginStroke({300, 300});
+    s.extendStroke({303, 300});
+    s.endStroke();
+    CHECK(s.strokes().empty());
+    CHECK(s.inkUsed() == 0.0f);
+}

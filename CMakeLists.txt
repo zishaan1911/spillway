@@ -43,6 +43,7 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_level.cpp
     tests/test_particle_grid.cpp
     tests/test_rigid.cpp
+    tests/test_session.cpp
     tests/test_world.cpp)
   target_include_directories(spillway_tests PRIVATE tests)
   target_link_libraries(spillway_tests PRIVATE spillway_core)
