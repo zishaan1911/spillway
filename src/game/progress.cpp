@@ -20,6 +20,8 @@ bool Progress::record(const std::string& levelId, int stars, float time) {
     return improved;
 }
 
+void Progress::addSpill(const std::string& levelId) { ++records_[levelId].spills; }
+
 LevelRecord Progress::get(const std::string& levelId) const {
     const auto it = records_.find(levelId);
     return it == records_.end() ? LevelRecord{} : it->second;
@@ -31,9 +33,17 @@ int Progress::totalStars() const {
     return total;
 }
 
+int Progress::totalSpills() const {
+    int total = 0;
+    for (const auto& [id, r] : records_) total += r.spills;
+    return total;
+}
+
 std::string Progress::serialize() const {
     std::ostringstream out;
-    for (const auto& [id, r] : records_) out << id << ' ' << r.stars << ' ' << r.bestTime << '\n';
+    for (const auto& [id, r] : records_) {
+        out << id << ' ' << r.stars << ' ' << r.bestTime << ' ' << r.spills << '\n';
+    }
     return out.str();
 }
 
@@ -46,7 +56,9 @@ Progress Progress::parse(const std::string& text) {
         std::string id;
         LevelRecord r;
         if (!(fields >> id >> r.stars >> r.bestTime)) continue;  // skip junk lines
+        if (!(fields >> r.spills)) r.spills = 0;                 // older saves had no count
         r.stars = std::clamp(r.stars, 0, 3);
+        r.spills = std::max(r.spills, 0);
         p.records_[id] = r;
     }
     return p;
