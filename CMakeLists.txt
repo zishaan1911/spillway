@@ -37,6 +37,7 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_collider_grid.cpp
     tests/test_contact.cpp
     tests/test_geometry.cpp
+    tests/test_level.cpp
     tests/test_particle_grid.cpp
     tests/test_rigid.cpp
     tests/test_world.cpp)
