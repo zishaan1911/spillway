@@ -1,0 +1,16 @@
+name  Umbrella
+hint  Something is keeping the cup dry. Catch what runs off the lid.
+ink    400
+target 260
+par    14
+
+emitter 660 90   0 1   170 650 36
+
+# the lid, held up above the cup
+wall 560 420  760 420  7
+# the cup
+chain 6   585 520   585 665   735 665   735 520
+goal      592 540   136 118
+
+solution 490 425  535 470  600 508
+solution 830 425  785 470  720 508
