@@ -77,6 +77,20 @@ void Session::endStroke() {
     if (strokes_.back().points.size() < 2) strokes_.pop_back();
 }
 
+void Session::drawPolyline(const std::vector<Vec2>& points) {
+    if (points.size() < 2 || !beginStroke(points.front())) return;
+    for (size_t i = 1; i < points.size() && drawing_; ++i) {
+        // Feed the path in small steps so corners are followed closely.
+        const Vec2 from = points[i - 1];
+        const Vec2 to = points[i];
+        const int steps = std::max(1, static_cast<int>(length(to - from) / 2.0f));
+        for (int k = 1; k <= steps && drawing_; ++k) {
+            extendStroke(from + (to - from) * (static_cast<float>(k) / steps));
+        }
+    }
+    endStroke();
+}
+
 bool Session::eraseAt(Vec2 p, float reach) {
     if (drawing_ || state_ == State::Won || state_ == State::Lost) return false;
     int best = -1;

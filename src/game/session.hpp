@@ -49,6 +49,8 @@ public:
     bool beginStroke(Vec2 p);
     void extendStroke(Vec2 p);
     void endStroke();
+    // Draws a whole polyline as one stroke, as if traced with the mouse.
+    void drawPolyline(const std::vector<Vec2>& points);
     bool drawing() const { return drawing_; }
     const std::vector<Stroke>& strokes() const { return strokes_; }
     // Removes the stroke passing nearest to p (within reach), refunding its ink.
