@@ -44,6 +44,7 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_geometry.cpp
     tests/test_level.cpp
     tests/test_levels.cpp
+    tests/test_mover.cpp
     tests/test_particle_grid.cpp
     tests/test_progress.cpp
     tests/test_rigid.cpp
