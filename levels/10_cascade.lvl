@@ -1,0 +1,27 @@
+name  Cascade
+hint  Everything at once: lift it, bridge it, land it.
+ink    700
+target 300
+par    14
+
+emitter 120 90   0 1   200 900 36
+
+# left: a floor that runs away from the fan, and the fan against the wall
+chain 6   300 600   40 650
+zone 300 250  124 440   350 -1700
+wall 430 250  430 720  6
+
+# middle: a floor with a hole in it
+chain 6   430 480   600 510
+chain 6   680 522   860 545
+drain 600 560  80 160
+wall  600 510  600 720  6
+wall  680 522  680 720  6
+
+# right: the cup, set low
+chain 6   960 600   960 700   1120 700   1120 560
+goal      967 616   146 78
+
+solution 70 220   90 270   300 420
+solution 585 505  695 522
+solution 850 565  975 600
