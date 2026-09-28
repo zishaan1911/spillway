@@ -175,3 +175,14 @@ TEST("water kept moving forever still ends the level") {
     for (int i = 0; i < 60 * 30 && s.state() == Session::State::Flowing; ++i) s.update();
     CHECK(s.state() == Session::State::Lost);
 }
+
+TEST("strokes cannot be drawn through a ball") {
+    Level l = cupLevel();
+    l.balls.push_back({{400, 300}, 20.0f, 0.5f});
+    Session s(l);
+    CHECK(!s.beginStroke({400, 300}));
+    CHECK(s.beginStroke({300, 300}));
+    s.extendStroke({500, 300});
+    CHECK(!s.drawing());
+    CHECK(s.strokes()[0].points.back().x < 400.0f - 20.0f);
+}
