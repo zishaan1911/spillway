@@ -22,6 +22,7 @@ endif()
 add_library(spillway_core STATIC
   src/game/emitter.cpp
   src/game/level.cpp
+  src/game/session.cpp
   src/physics/collider_grid.cpp
   src/physics/contact.cpp
   src/physics/fluid.cpp
