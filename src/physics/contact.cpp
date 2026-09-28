@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "physics/rigid.hpp"
+
 namespace spill {
 
 namespace {
@@ -51,6 +53,40 @@ bool resolveParticleCapsule(Vec2& pos, Vec2& prev, float radius, const Capsule& 
     const Vec2 tangential = disp - normal * along;
     if (along < 0.0f) along = 0.0f;
     prev = pos - (normal * along + tangential * (1.0f - friction));
+    return true;
+}
+
+bool resolveParticleDisc(Vec2& pos, Vec2& prev, float radius, float particleMass, Body& body,
+                         float friction, float dt) {
+    const Vec2 d = pos - body.pos;
+    const float reach = body.radius + radius;
+    const float dist2 = lengthSq(d);
+    if (dist2 >= reach * reach) return false;
+    const float dist = std::sqrt(dist2);
+    const Vec2 normal = dist > 1e-6f ? d / dist : Vec2{0.0f, -1.0f};
+    const Vec2 contact = body.pos + normal * body.radius;
+
+    // Velocity of the particle relative to the surface it is touching.
+    const Vec2 v = (pos - prev) / dt;
+    const Vec2 rel = v - body.velocityAt(contact);
+    const float vn = dot(rel, normal);
+    const Vec2 relTangent = rel - normal * vn;
+
+    Vec2 dv = relTangent * -friction;
+    if (vn < 0.0f) dv -= normal * vn;
+
+    // Reaction on the body. Split by effective mass so a light body is not
+    // kicked harder than the particle itself; the normal passes through the
+    // centre so only the tangential part spins the disc.
+    const float share = body.invMass > 0.0f
+                            ? (1.0f / particleMass) / (1.0f / particleMass + body.invMass)
+                            : 1.0f;
+    const Vec2 impulse = dv * (particleMass * share);
+    body.applyImpulse(-impulse, contact);
+
+    const Vec2 vAfter = v + dv * share;
+    pos = body.pos + normal * reach;
+    prev = pos - vAfter * dt;
     return true;
 }
 
