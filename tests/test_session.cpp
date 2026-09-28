@@ -143,8 +143,10 @@ TEST("water that misses the goal loses once the taps run dry") {
     s.release();
     runFrames(s, 60 * 12);
     CHECK(s.state() == Session::State::Lost);
+    CHECK(s.loss() != Session::Loss::None);
     CHECK(!s.lossReason().empty());
     CHECK(s.stars() == 0);
+    CHECK(s.peakInGoal() < l.target);
 }
 
 TEST("no drawing after the level is decided") {
@@ -174,6 +176,7 @@ TEST("water kept moving forever still ends the level") {
     s.release();
     for (int i = 0; i < 60 * 30 && s.state() == Session::State::Flowing; ++i) s.update();
     CHECK(s.state() == Session::State::Lost);
+    CHECK(s.loss() == Session::Loss::NeverArrived);
 }
 
 TEST("strokes cannot be drawn through a ball") {
