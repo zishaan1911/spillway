@@ -44,9 +44,10 @@ public:
     void collidePairs();
 };
 
-// Contact between a disc and a static capsule. Corrects position fully and
-// applies a normal impulse with restitution plus Coulomb friction.
-bool collideDiscCapsule(Body& body, const Capsule& wall);
+// Contact between a disc and a capsule that is static or moving with
+// `surfaceVel`. Corrects position fully and applies a normal impulse with
+// restitution plus Coulomb friction.
+bool collideDiscCapsule(Body& body, const Capsule& wall, Vec2 surfaceVel = {});
 
 // Contact between two discs, splitting the correction by inverse mass.
 bool collideDiscDisc(Body& a, Body& b);
