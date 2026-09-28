@@ -117,7 +117,7 @@ void App::applyPending() {
 }
 
 void App::run() {
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !quit_) {
         tick();
     }
 }
@@ -188,22 +188,62 @@ void App::tick() {
     applyPending();
 }
 
-void App::updateMenu() {}
+void App::updateMenu() {
+    if (IsKeyPressed(KEY_ESCAPE)) quit_ = true;
+    updateDemo();
+}
+
+// The first level, solved, loops behind the title.
+void App::updateDemo() {
+    if (levels_.empty()) return;
+    if (!demo_) {
+        demo_ = std::make_unique<Session>(levels_[0]);
+        for (const auto& stroke : levels_[0].solution) demo_->drawPolyline(stroke);
+        demo_->release();
+        demoRestart_ = 0.0f;
+    }
+    demo_->update();
+    if (demo_->state() == Session::State::Won || demo_->state() == Session::State::Lost) {
+        demoRestart_ += Session::kFrameDt;
+        if (demoRestart_ > 3.0f) demo_.reset();
+    }
+}
+
+void App::drawSession(const Session& s) {
+    // The frame's texture mode is active; pause it to render the fluid field.
+    EndTextureMode();
+    fluid_.render(s.world().fluid);
+    BeginTextureMode(frame_);
+
+    drawBackdrop(s, time_);
+    if (debugView_) {
+        fluid_.drawParticles(s.world().fluid, s.world().fluid.params().restDensity);
+    } else {
+        fluid_.draw();
+    }
+    drawForeground(s, time_);
+}
 
 void App::drawMenu() {
-    ui::textCentered("SPILLWAY", kWidth * 0.5f, 60, 72, palette::kText);
-    if (!levelErrors_.empty()) {
-        float y = 160;
-        for (const std::string& e : levelErrors_) {
-            ui::textCentered(e.c_str(), kWidth * 0.5f, y, 20, palette::kNoDraw);
-            y += 26;
-        }
+    if (demo_) {
+        drawSession(*demo_);
+        DrawRectangle(0, 0, kWidth, kHeight, Fade(palette::kBackground, 0.72f));
     }
+    ui::textCentered("SPILLWAY", kWidth * 0.5f, 56, 84, palette::kText);
+    ui::textCentered("a fluid puzzle", kWidth * 0.5f, 146, 24, palette::kMuted);
+
+    int total = 0;
+    for (const Level& l : levels_) total += progress_.get(l.id).stars;
+    char starText[32];
+    std::snprintf(starText, sizeof starText, "%d / %zu", total, levels_.size() * 3);
+    const float starW = ui::measure(starText, 24).x + 30;
+    ui::star({kWidth * 0.5f - starW * 0.5f + 10, 196}, 11, true, palette::kStroke);
+    ui::text(starText, kWidth * 0.5f - starW * 0.5f + 28, 184, 24, palette::kText);
     const int cols = 5;
     const float w = 200, h = 110, gap = 24;
     const float x0 = (kWidth - (cols * w + (cols - 1) * gap)) * 0.5f;
     for (size_t i = 0; i < levels_.size(); ++i) {
-        const Rectangle r{x0 + (i % cols) * (w + gap), 220 + (i / cols) * (h + gap), w, h};
+        const Rectangle r{x0 + (i % cols) * (w + gap), 250 + (i / cols) * (h + gap), w, h};
         const bool open = unlocked(i);
         char label[64];
         std::snprintf(label, sizeof label, "%zu", i + 1);
@@ -213,6 +253,15 @@ void App::drawMenu() {
         ui::stars({r.x + r.width * 0.5f, r.y + h - 20}, 9, progress_.get(levels_[i].id).stars, 3,
                   palette::kStroke);
     }
+
+    float y = 540;
+    for (const std::string& e : levelErrors_) {
+        ui::textCentered(e.c_str(), kWidth * 0.5f, y, 20, palette::kNoDraw);
+        y += 26;
+    }
+    ui::textCentered("Draw walls to get the water into the goal. Finish a level to unlock the next.",
+                     kWidth * 0.5f, kHeight - 92, 20, palette::kMuted);
+    if (ui::button({kWidth * 0.5f - 80, kHeight - 60, 160, 44}, "Quit", mouse_, clicked_)) quit_ = true;
 }
 
 void App::updatePlay() {
@@ -264,18 +313,7 @@ void App::finishLevel() {
 
 void App::drawPlay() {
     const Session& s = *session_;
-    // The frame's texture mode is active; pause it to render the fluid field.
-    EndTextureMode();
-    fluid_.render(s.world().fluid);
-    BeginTextureMode(frame_);
-
-    drawBackdrop(s, time_);
-    if (debugView_) {
-        fluid_.drawParticles(s.world().fluid, s.world().fluid.params().restDensity);
-    } else {
-        fluid_.draw();
-    }
-    drawForeground(s, time_);
+    drawSession(s);
     drawHud();
     if (paused_) drawPause();
     if (s.state() == Session::State::Won || s.state() == Session::State::Lost) drawResult();

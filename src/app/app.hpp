@@ -48,6 +48,8 @@ private:
     void updatePlay();
     void finishLevel();
 
+    void updateDemo();
+    void drawSession(const Session& s);
     void drawMenu();
     void drawPlay();
     void drawHud();
@@ -63,6 +65,9 @@ private:
     std::string progressPath_;
 
     std::unique_ptr<Session> session_;
+    std::unique_ptr<Session> demo_;  // plays behind the title screen
+    float demoRestart_ = 0.0f;
+    bool quit_ = false;
     size_t current_ = 0;
     bool paused_ = false;
     bool debugView_ = false;
