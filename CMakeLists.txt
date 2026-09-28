@@ -64,6 +64,9 @@ if(SPILLWAY_BUILD_GAME)
     GIT_SHALLOW TRUE)
   FetchContent_MakeAvailable(raylib)
 
-  add_executable(spillway src/app/main.cpp)
-  target_link_libraries(spillway PRIVATE raylib)
+  add_executable(spillway
+    src/app/main.cpp
+    src/render/fluid_renderer.cpp)
+  target_link_libraries(spillway PRIVATE spillway_core raylib)
+  target_compile_options(spillway PRIVATE ${SPILLWAY_WARNINGS})
 endif()
