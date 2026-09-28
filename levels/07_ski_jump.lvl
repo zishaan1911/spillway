@@ -7,10 +7,13 @@ hold   3
 
 emitter 140 90   0 1   380 650 36
 
+# left bank
 chain 6   40 560   430 560   430 720
+# the chasm
 nodraw 440 60  250 660
 drain  430 640  250 80
 
+# the cup. It does not, in fact, wait: it bolts once water crosses the chasm.
 shift 220 0  0.8   690 60 120 660
   chain 6   740 470   740 660   900 660   900 470
   goal      747 490   146 164
