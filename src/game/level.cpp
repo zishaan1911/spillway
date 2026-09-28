@@ -49,6 +49,7 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
     std::string line;
     int lineNo = 0;
     std::vector<float> v;
+    int group = -1;  // mover currently being defined, between a motion and `end`
 
     auto fail = [&](const std::string& msg) {
         return ParseResult{std::nullopt, "line " + std::to_string(lineNo) + ": " + msg};
@@ -73,6 +74,23 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
         if (!readFloats(in, v)) return fail("expected numbers after '" + key + "'");
         auto need = [&](size_t lo, size_t hi) { return v.size() >= lo && v.size() <= hi; };
 
+        // Walls and goals inside a moving group belong to that mover.
+        auto addWall = [&](const Capsule& c) {
+            if (group >= 0) {
+                level.movers[group].walls.push_back(c);
+            } else {
+                level.walls.push_back(c);
+            }
+        };
+        auto beginGroup = [&](const Motion& m) {
+            level.movers.push_back({m, {}});
+            group = static_cast<int>(level.movers.size()) - 1;
+        };
+
+        if (group >= 0 && key != "wall" && key != "chain" && key != "goal" && key != "end") {
+            return fail("only wall, chain and goal can go inside a moving group");
+        }
+
         if (key == "ink") {
             if (!need(1, 1)) return fail("ink takes 1 number");
             level.ink = v[0];
@@ -82,6 +100,39 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
         } else if (key == "par") {
             if (!need(1, 1)) return fail("par takes 1 number");
             level.par = v[0];
+        } else if (key == "hold") {
+            if (!need(1, 1)) return fail("hold takes 1 number");
+            level.hold = v[0];
+        } else if (key == "slide") {
+            if (!need(3, 4)) return fail("slide takes dx dy period [phase]");
+            Motion m;
+            m.kind = Motion::Kind::Slide;
+            m.offset = {v[0], v[1]};
+            m.period = v[2];
+            if (v.size() == 4) m.phase = v[3];
+            beginGroup(m);
+        } else if (key == "spin") {
+            if (!need(3, 3)) return fail("spin takes px py degrees-per-second");
+            Motion m;
+            m.kind = Motion::Kind::Spin;
+            m.pivot = {v[0], v[1]};
+            m.angularSpeed = v[2] * 3.14159265f / 180.0f;
+            beginGroup(m);
+        } else if (key == "shift") {
+            if (!need(7, 7)) return fail("shift takes dx dy seconds tx ty tw th");
+            Motion m;
+            m.kind = Motion::Kind::Shift;
+            m.offset = {v[0], v[1]};
+            m.duration = v[2];
+            m.trigger = rect(v, 3);
+            beginGroup(m);
+        } else if (key == "end") {
+            if (group < 0) return fail("end without a moving group");
+            if (level.movers[group].walls.empty()) return fail("moving group has no walls");
+            group = -1;
+        } else if (key == "fake") {
+            if (!need(4, 5)) return fail("fake takes x1 y1 x2 y2 [radius]");
+            level.fakes.push_back({{v[0], v[1]}, {v[2], v[3]}, v.size() == 5 ? v[4] : 6.0f});
         } else if (key == "emitter") {
             if (!need(6, 7)) return fail("emitter takes x y dx dy speed total [width]");
             EmitterDef e;
@@ -94,18 +145,21 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
             level.emitters.push_back(e);
         } else if (key == "wall") {
             if (!need(4, 5)) return fail("wall takes x1 y1 x2 y2 [radius]");
-            level.walls.push_back({{v[0], v[1]}, {v[2], v[3]}, v.size() == 5 ? v[4] : 6.0f});
+            addWall({{v[0], v[1]}, {v[2], v[3]}, v.size() == 5 ? v[4] : 6.0f});
         } else if (key == "chain") {
             // chain radius x1 y1 x2 y2 ... : a connected run of walls
             if (v.size() < 5 || (v.size() - 1) % 2 != 0) {
                 return fail("chain takes radius then at least two x y points");
             }
             for (size_t i = 1; i + 3 < v.size(); i += 2) {
-                level.walls.push_back({{v[i], v[i + 1]}, {v[i + 2], v[i + 3]}, v[0]});
+                addWall({{v[i], v[i + 1]}, {v[i + 2], v[i + 3]}, v[0]});
             }
         } else if (key == "goal") {
             if (!need(4, 4)) return fail("goal takes x y w h");
-            level.goals.push_back({rect(v, 0)});
+            if (group >= 0 && level.movers[group].motion.kind == Motion::Kind::Spin) {
+                return fail("goals can ride on slides and shifts, not spins");
+            }
+            level.goals.push_back({rect(v, 0), group});
         } else if (key == "drain") {
             if (!need(4, 4)) return fail("drain takes x y w h");
             level.drains.push_back(rect(v, 0));
@@ -128,6 +182,7 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
         }
     }
 
+    if (group >= 0) return fail("moving group is missing its end");
     lineNo = 0;
     if (level.emitters.empty()) return fail("level has no emitter");
     if (level.goals.empty()) return fail("level has no goal");

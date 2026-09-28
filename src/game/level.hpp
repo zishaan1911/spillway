@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "physics/geometry.hpp"
+#include "physics/mover.hpp"
 
 namespace spill {
 
@@ -18,6 +19,13 @@ struct EmitterDef {
 
 struct GoalDef {
     Aabb area;
+    int mover = -1;  // index into Level::movers if the goal rides on one
+};
+
+// Walls that move together along a scripted path.
+struct MoverDef {
+    Motion motion;
+    std::vector<Capsule> walls;
 };
 
 struct ZoneDef {
@@ -40,9 +48,12 @@ struct Level {
     float ink = 600.0f;  // how much wall the player may draw, in world units
     int target = 300;    // particles needed in the goal
     float par = 30.0f;   // seconds, for the time star
+    float hold = 1.0f;   // seconds the goal must stay full
 
     std::vector<EmitterDef> emitters;
     std::vector<Capsule> walls;
+    std::vector<MoverDef> movers;
+    std::vector<Capsule> fakes;  // drawn like walls; water goes straight through
     std::vector<GoalDef> goals;
     std::vector<Aabb> drains;
     std::vector<ZoneDef> zones;
