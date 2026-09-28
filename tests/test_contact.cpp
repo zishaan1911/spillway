@@ -1,4 +1,5 @@
 #include "physics/contact.hpp"
+#include "physics/rigid.hpp"
 #include "test.hpp"
 
 using namespace spill;
@@ -46,4 +47,25 @@ TEST("rounded end caps push radially") {
     Vec2 prev{110, 0}, pos{104, 3};
     resolveParticleCapsule(pos, prev, 0.0f, wall, 0.0f);
     CHECK_NEAR(length(pos - Vec2{100, 0}), 5.0, 1e-4);
+}
+
+TEST("particle hitting a disc transfers momentum to it") {
+    Body disc = makeDisc({0, 0}, 10.0f, 4.0f);
+    const float dt = 1.0f / 100.0f;
+    Vec2 prev{-13, 0}, pos{-11, 0};  // moving right at 200 u/s, overlapping
+    const Vec2 before = (pos - prev) / dt * 1.0f + disc.vel * disc.mass();
+    CHECK(resolveParticleDisc(pos, prev, 2.0f, 1.0f, disc, 0.0f, dt));
+    const Vec2 after = (pos - prev) / dt * 1.0f + disc.vel * disc.mass();
+    CHECK(disc.vel.x > 0.0f);
+    CHECK_NEAR(before.x, after.x, 1e-2);
+    CHECK_NEAR(length(pos - disc.pos), 12.0, 1e-4);
+}
+
+TEST("particles resting on a moving disc are carried along") {
+    Body disc = makeDisc({0, 0}, 10.0f, 1000.0f);
+    disc.vel = {0, -50};  // rising
+    const float dt = 1.0f / 100.0f;
+    Vec2 prev{0, -12}, pos{0, -11.5f};
+    resolveParticleDisc(pos, prev, 2.0f, 1.0f, disc, 0.0f, dt);
+    CHECK((pos - prev).y / dt < -45.0f);
 }
