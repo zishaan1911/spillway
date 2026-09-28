@@ -42,12 +42,15 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_emitter.cpp
     tests/test_geometry.cpp
     tests/test_level.cpp
+    tests/test_levels.cpp
     tests/test_particle_grid.cpp
     tests/test_progress.cpp
     tests/test_rigid.cpp
     tests/test_session.cpp
     tests/test_world.cpp)
   target_include_directories(spillway_tests PRIVATE tests)
+  target_compile_definitions(spillway_tests PRIVATE
+    SPILLWAY_LEVEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/levels")
   target_link_libraries(spillway_tests PRIVATE spillway_core)
   target_compile_options(spillway_tests PRIVATE ${SPILLWAY_WARNINGS})
   add_test(NAME spillway_tests COMMAND spillway_tests)
