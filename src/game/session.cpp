@@ -40,12 +40,6 @@ bool Session::canDrawAt(Vec2 p) const {
     return true;
 }
 
-float Session::inkUsed() const {
-    float used = 0.0f;
-    for (const Stroke& s : strokes_) used += s.length;
-    return used;
-}
-
 bool Session::beginStroke(Vec2 p) {
     if (drawing_ || !canDrawAt(p) || inkLeft() <= 0.0f) return false;
     strokes_.push_back({{p}, 0.0f});
@@ -72,6 +66,7 @@ void Session::extendStroke(Vec2 p) {
         }
         s.points.push_back(next);
         s.length += step;
+        inkSpent_ += step;
         changed = true;
     }
     if (changed) rebuildWalls();
@@ -98,7 +93,7 @@ void Session::drawPolyline(const std::vector<Vec2>& points) {
 }
 
 bool Session::eraseAt(Vec2 p, float reach) {
-    if (drawing_ || state_ == State::Won || state_ == State::Lost) return false;
+    if (drawing_ || state_ != State::Planning) return false;
     int best = -1;
     float bestDist = reach + kStrokeRadius;
     for (size_t k = 0; k < strokes_.size(); ++k) {
@@ -118,7 +113,7 @@ bool Session::eraseAt(Vec2 p, float reach) {
 }
 
 void Session::undo() {
-    if (drawing_ || strokes_.empty() || state_ == State::Won || state_ == State::Lost) return;
+    if (drawing_ || strokes_.empty() || state_ != State::Planning) return;
     strokes_.pop_back();
     rebuildWalls();
 }

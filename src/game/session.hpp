@@ -53,11 +53,13 @@ public:
     void drawPolyline(const std::vector<Vec2>& points);
     bool drawing() const { return drawing_; }
     const std::vector<Stroke>& strokes() const { return strokes_; }
-    // Removes the stroke passing nearest to p (within reach), refunding its ink.
+    // Removes the stroke passing nearest to p (within reach). No take-backs:
+    // erasing and undo only work before the taps open, and the ink a stroke
+    // cost is never refunded.
     bool eraseAt(Vec2 p, float reach = 12.0f);
     void undo();
-    float inkUsed() const;
-    float inkLeft() const { return level_.ink - inkUsed(); }
+    float inkUsed() const { return inkSpent_; }
+    float inkLeft() const { return level_.ink - inkSpent_; }
 
     // Where goal i is right now; goals can ride on movers.
     Aabb goalArea(size_t i) const;
@@ -86,6 +88,7 @@ private:
     std::vector<Emitter> emitters_;
     std::vector<Stroke> strokes_;
     bool drawing_ = false;
+    float inkSpent_ = 0.0f;
     State state_ = State::Planning;
     int inGoal_ = 0;
     float elapsed_ = 0.0f;

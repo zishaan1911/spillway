@@ -83,7 +83,7 @@ TEST("a click without a drag leaves no stroke") {
     CHECK(s.inkUsed() == 0.0f);
 }
 
-TEST("erasing a stroke refunds its ink and removes its walls") {
+TEST("erasing a stroke removes its walls but not what it cost") {
     Session s(cupLevel());
     s.beginStroke({300, 300});
     s.extendStroke({400, 300});
@@ -94,7 +94,7 @@ TEST("erasing a stroke refunds its ink and removes its walls") {
     CHECK(!s.eraseAt({350, 350}));  // nowhere near either stroke
     CHECK(s.eraseAt({350, 305}));
     CHECK(s.strokes().size() == 1u);
-    CHECK_NEAR(s.inkUsed(), 50.0, 1e-3);
+    CHECK_NEAR(s.inkUsed(), 150.0, 1e-3);
     CHECK(s.world().walls().size() == 3u + 5u);
 }
 
@@ -108,7 +108,7 @@ TEST("undo removes the most recent stroke") {
     s.endStroke();
     s.undo();
     CHECK(s.strokes().size() == 1u);
-    CHECK_NEAR(s.inkUsed(), 100.0, 1e-3);
+    CHECK_NEAR(s.inkUsed(), 150.0, 1e-3);
     s.undo();
     s.undo();  // harmless when empty
     CHECK(s.strokes().empty());
@@ -215,4 +215,17 @@ TEST("hold time comes from the level") {
     }
     CHECK(s.state() == Session::State::Won);
     CHECK(framesFull >= 179);
+}
+
+TEST("no erasing or undo once the taps are open") {
+    Session s(cupLevel());
+    s.beginStroke({300, 300});
+    s.extendStroke({400, 300});
+    s.endStroke();
+    s.release();
+    CHECK(!s.eraseAt({350, 300}));
+    s.undo();
+    CHECK(s.strokes().size() == 1u);
+    // Drawing more is still allowed, while the ink lasts.
+    CHECK(s.beginStroke({300, 400}));
 }
