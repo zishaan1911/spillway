@@ -129,6 +129,50 @@ void Session::update() {
     // and before release so balls can come to rest.
     world_.step(kFrameDt);
     inGoal_ = countInGoals();
+    if (state_ == State::Flowing) judge();
+}
+
+void Session::judge() {
+    if (inGoal_ >= level_.target) {
+        if (holdTimer_ == 0.0f) holdStart_ = elapsed_;
+        holdTimer_ += kFrameDt;
+        if (holdTimer_ >= kHoldTime) {
+            finishTime_ = holdStart_;
+            state_ = State::Won;
+            if (drawing_) endStroke();
+        }
+        return;
+    }
+    holdTimer_ = 0.0f;
+
+    const bool tapsEmpty = std::all_of(emitters_.begin(), emitters_.end(),
+                                       [](const Emitter& e) { return e.empty(); });
+    if (!tapsEmpty) return;
+
+    if (static_cast<int>(world_.fluid.size()) < level_.target) {
+        lose("Not enough water left to fill the goal.");
+        return;
+    }
+
+    float speedSum = 0.0f;
+    for (const Vec2& v : world_.fluid.vel) speedSum += length(v);
+    const float meanSpeed = world_.fluid.size() ? speedSum / world_.fluid.size() : 0.0f;
+    stillTimer_ = meanSpeed < kSettleSpeed ? stillTimer_ + kFrameDt : 0.0f;
+    if (stillTimer_ >= kSettleTime) lose("The water has settled short of the goal.");
+}
+
+void Session::lose(std::string reason) {
+    state_ = State::Lost;
+    lossReason_ = std::move(reason);
+    if (drawing_) endStroke();
+}
+
+int Session::stars() const {
+    if (state_ != State::Won) return 0;
+    int s = 1;
+    if (inkUsed() <= 0.5f * level_.ink) ++s;
+    if (finishTime_ <= level_.par) ++s;
+    return s;
 }
 
 }  // namespace spill

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "game/emitter.hpp"
@@ -24,6 +25,9 @@ public:
     static constexpr Aabb kArena{{0.0f, 0.0f}, {1280.0f, 720.0f}};
     static constexpr float kStrokeRadius = 5.0f;
     static constexpr float kStrokeStep = 10.0f;  // distance between stroke points
+    static constexpr float kHoldTime = 1.0f;     // goal must stay full this long
+    static constexpr float kSettleTime = 2.5f;   // stillness before declaring a loss
+    static constexpr float kSettleSpeed = 12.0f;
 
     explicit Session(const Level& level);
 
@@ -56,9 +60,21 @@ public:
     int inGoal() const { return inGoal_; }
     float elapsed() const { return elapsed_; }
 
+    // 0..1 while the goal is full and the win is being confirmed.
+    float holdProgress() const { return holdTimer_ / kHoldTime; }
+    // Time from release until the goal first filled, for the winning fill.
+    float finishTime() const { return finishTime_; }
+    const std::string& lossReason() const { return lossReason_; }
+
+    // One star for finishing, one for using at most half the ink, one for
+    // beating par. Zero unless the level is won.
+    int stars() const;
+
 private:
     void rebuildWalls();
     int countInGoals() const;
+    void judge();
+    void lose(std::string reason);
 
     Level level_;
     World world_;
@@ -68,6 +84,11 @@ private:
     State state_ = State::Planning;
     int inGoal_ = 0;
     float elapsed_ = 0.0f;
+    float holdTimer_ = 0.0f;
+    float holdStart_ = 0.0f;
+    float finishTime_ = 0.0f;
+    float stillTimer_ = 0.0f;
+    std::string lossReason_;
 };
 
 }  // namespace spill
