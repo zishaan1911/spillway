@@ -74,8 +74,9 @@ if(SPILLWAY_BUILD_GAME)
   target_compile_options(spillway PRIVATE ${SPILLWAY_WARNINGS})
 
   # Levels are plain text files loaded at runtime, so keep a copy beside the
-  # executable.
-  add_custom_command(TARGET spillway POST_BUILD
+  # executable. A separate target so edits are synced even without a relink.
+  add_custom_target(spillway_levels ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/levels $<TARGET_FILE_DIR:spillway>/levels)
+  add_dependencies(spillway spillway_levels)
 endif()
