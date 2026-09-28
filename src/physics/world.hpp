@@ -4,6 +4,7 @@
 
 #include "physics/collider_grid.hpp"
 #include "physics/fluid.hpp"
+#include "physics/mover.hpp"
 #include "physics/rigid.hpp"
 
 namespace spill {
@@ -54,6 +55,10 @@ public:
     RigidBodies bodies;
     std::vector<ForceZone> zones;
     std::vector<Drain> drains;
+    std::vector<Mover> movers;
+
+    // Simulated seconds since the world was created; drives the movers.
+    float time() const { return time_; }
 
     // Particles removed so far, by cause.
     int drained = 0;
@@ -63,10 +68,13 @@ private:
     void substep(float dt);
     void collideParticles(float dt);
     void removeLostParticles();
+    void updateMovers(float dt);
+    void triggerMovers();
 
     Aabb bounds_{};
     WorldParams params_{};
     std::vector<Capsule> walls_;
+    float time_ = 0.0f;
     ColliderGrid colliderGrid_;
 };
 
