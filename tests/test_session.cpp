@@ -186,3 +186,33 @@ TEST("strokes cannot be drawn through a ball") {
     CHECK(!s.drawing());
     CHECK(s.strokes()[0].points.back().x < 400.0f - 20.0f);
 }
+
+TEST("a goal riding on a slide is counted where it is now") {
+    const ParseResult r = parseLevel(
+        "ink 300\ntarget 10\n"
+        "emitter 640 100  0 1  200 150\n"
+        "slide 400 0 4\n"
+        "  chain 6  600 500  600 640  680 640  680 500\n"
+        "  goal 606 520 68 114\n"
+        "end\n",
+        "moving");
+    Session s(*r.level);
+    for (int i = 0; i < 120; ++i) s.update();  // 2 s: halfway through the period
+    CHECK_NEAR(s.goalArea(0).min.x, 606.0 + 400.0, 1e-2);
+    CHECK(s.world().walls().empty());
+    CHECK(s.world().movers.size() == 1u);
+}
+
+TEST("hold time comes from the level") {
+    Level l = cupLevel();
+    l.hold = 3.0f;
+    Session s(l);
+    s.release();
+    int framesFull = 0;
+    while (s.state() == Session::State::Flowing && framesFull < 60 * 20) {
+        s.update();
+        if (s.inGoal() >= l.target) ++framesFull;
+    }
+    CHECK(s.state() == Session::State::Won);
+    CHECK(framesFull >= 179);
+}
