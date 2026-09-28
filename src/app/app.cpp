@@ -309,7 +309,9 @@ void App::updatePlay() {
     accumulator_ += std::min(GetFrameTime(), 0.1f);
     int updates = 0;
     while (accumulator_ >= Session::kFrameDt && updates < kMaxUpdatesPerFrame) {
+        const double t0 = GetTime();
         s.update();
+        stepMs_ = stepMs_ * 0.9 + (GetTime() - t0) * 1000.0 * 0.1;
         accumulator_ -= Session::kFrameDt;
         ++updates;
     }
@@ -369,6 +371,15 @@ void App::drawHud() {
     ui::text(buf, 1020, 12, 24, s.elapsed() <= l.par ? palette::kText : palette::kMuted);
     std::snprintf(buf, sizeof buf, "par %.0fs", l.par);
     ui::textRight(buf, kWidth - 16, 14, 20, palette::kMuted);
+
+    if (debugView_) {
+        const World& w = s.world();
+        std::snprintf(buf, sizeof buf,
+                      "particles %zu   pairs %zu   bodies %zu   walls %zu   step %.2f ms   %d fps",
+                      w.fluid.size(), w.fluid.pairs().size(), w.bodies.items.size(), w.walls().size(),
+                      stepMs_, GetFPS());
+        ui::text(buf, 16, 58, 18, palette::kMuted);
+    }
 
     if (s.state() == Session::State::Planning) {
         const char* msg = l.hint.empty() ? "Draw with the left mouse button." : l.hint.c_str();

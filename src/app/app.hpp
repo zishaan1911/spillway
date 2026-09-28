@@ -75,6 +75,7 @@ private:
     bool recorded_ = false;
     bool newBest_ = false;
     double accumulator_ = 0.0;
+    double stepMs_ = 0.0;  // smoothed cost of one physics frame
     float time_ = 0.0f;
 
     ui::Viewport viewport_;
