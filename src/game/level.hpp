@@ -49,6 +49,10 @@ struct Level {
     std::vector<BallDef> balls;
     std::vector<Aabb> noDraw;
 
+    // Reference strokes that solve the level. The tests replay them to prove
+    // every shipped level can be won; players never see them.
+    std::vector<std::vector<Vec2>> solution;
+
     int totalFluid() const;
 };
 

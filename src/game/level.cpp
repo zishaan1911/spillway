@@ -115,6 +115,11 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
         } else if (key == "ball") {
             if (!need(3, 4)) return fail("ball takes x y radius [density]");
             level.balls.push_back({{v[0], v[1]}, v[2], v.size() == 4 ? v[3] : 0.5f});
+        } else if (key == "solution") {
+            if (v.size() < 4 || v.size() % 2 != 0) return fail("solution takes at least two x y points");
+            std::vector<Vec2> stroke;
+            for (size_t i = 0; i + 1 < v.size(); i += 2) stroke.push_back({v[i], v[i + 1]});
+            level.solution.push_back(std::move(stroke));
         } else if (key == "nodraw") {
             if (!need(4, 4)) return fail("nodraw takes x y w h");
             level.noDraw.push_back(rect(v, 0));
