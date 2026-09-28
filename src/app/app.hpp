@@ -19,6 +19,8 @@ struct CaptureRequest {
     float seconds = 4.0f;
     std::string file = "capture.png";
     bool solved = false;  // draw the level's reference solution first
+    int every = 0;        // if > 0, `file` is a folder and a frame is saved
+                          // every `every` physics frames
 };
 
 class App {
@@ -56,6 +58,7 @@ private:
     void drawHud();
     void drawPause();
     void drawResult();
+    bool exportFrame(const std::string& file);
 
     Screen screen_ = Screen::Menu;
     Action pending_ = Action::None;

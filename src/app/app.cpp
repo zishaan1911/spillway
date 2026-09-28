@@ -123,10 +123,8 @@ void App::run() {
 }
 
 bool App::capture(const CaptureRequest& request) {
-    const int frames = static_cast<int>(request.seconds / Session::kFrameDt);
     if (request.menu) {
         screen_ = Screen::Menu;
-        for (int i = 0; i < frames; ++i) updateDemo();
     } else {
         if (request.level >= levels_.size()) return false;
         startLevel(request.level);
@@ -134,11 +132,28 @@ bool App::capture(const CaptureRequest& request) {
             for (const auto& stroke : session_->level().solution) session_->drawPolyline(stroke);
         }
         session_->release();
-        for (int i = 0; i < frames; ++i) session_->update();
     }
-    time_ = request.seconds;
     mouse_ = {-100.0f, -100.0f};  // no hover highlights
 
+    const int frames = static_cast<int>(request.seconds / Session::kFrameDt);
+    int written = 0;
+    for (int i = 0; i < frames; ++i) {
+        if (request.menu) {
+            updateDemo();
+        } else {
+            session_->update();
+        }
+        time_ = (i + 1) * Session::kFrameDt;
+        if (request.every > 0 && i % request.every == 0) {
+            char name[32];
+            std::snprintf(name, sizeof name, "frame_%04d.png", written++);
+            if (!exportFrame((fs::path(request.file) / name).string())) return false;
+        }
+    }
+    return request.every > 0 || exportFrame(request.file);
+}
+
+bool App::exportFrame(const std::string& file) {
     BeginDrawing();
     BeginTextureMode(frame_);
     ClearBackground(palette::kBackground);
@@ -153,7 +168,7 @@ bool App::capture(const CaptureRequest& request) {
     Image img = LoadImageFromTexture(frame_.texture);
     ImageFlipVertical(&img);
     ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8);  // see the note in tick()
-    const bool ok = ExportImage(img, request.file.c_str());
+    const bool ok = ExportImage(img, file.c_str());
     UnloadImage(img);
     return ok;
 }
