@@ -11,6 +11,14 @@
 
 namespace spill {
 
+// Renders one level to a PNG without opening an interactive session. Used to
+// produce the screenshots in the README.
+struct CaptureRequest {
+    size_t level = 0;
+    float seconds = 4.0f;
+    std::string file = "capture.png";
+};
+
 class App {
 public:
     App();
@@ -19,6 +27,7 @@ public:
     App& operator=(const App&) = delete;
 
     void run();
+    bool capture(const CaptureRequest& request);
 
 private:
     enum class Screen { Menu, Play };

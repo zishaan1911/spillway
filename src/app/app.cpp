@@ -120,6 +120,28 @@ void App::run() {
     }
 }
 
+bool App::capture(const CaptureRequest& request) {
+    if (request.level >= levels_.size()) return false;
+    startLevel(request.level);
+    session_->release();
+    const int frames = static_cast<int>(request.seconds / Session::kFrameDt);
+    for (int i = 0; i < frames; ++i) session_->update();
+    time_ = request.seconds;
+
+    BeginDrawing();
+    BeginTextureMode(frame_);
+    ClearBackground(palette::kBackground);
+    drawPlay();
+    EndTextureMode();
+    EndDrawing();
+
+    Image img = LoadImageFromTexture(frame_.texture);
+    ImageFlipVertical(&img);
+    const bool ok = ExportImage(img, request.file.c_str());
+    UnloadImage(img);
+    return ok;
+}
+
 void App::tick() {
     viewport_ = ui::Viewport::fit(GetScreenWidth(), GetScreenHeight(), kWidth, kHeight);
     mouse_ = viewport_.toVirtual(GetMousePosition());
