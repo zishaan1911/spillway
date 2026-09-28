@@ -69,3 +69,20 @@ TEST("particles resting on a moving disc are carried along") {
     resolveParticleDisc(pos, prev, 2.0f, 1.0f, disc, 0.0f, dt);
     CHECK((pos - prev).y / dt < -45.0f);
 }
+
+TEST("a moving wall carries a resting particle with it") {
+    const Capsule wall{{0, 0}, {100, 0}, 5.0f};
+    // The wall rose 3 units this step and the particle, sitting on it, did not.
+    Vec2 prev{50, -6}, pos{50, -6};
+    CHECK(resolveParticleCapsule(pos, prev, 2.0f, wall, 0.0f, {0, -3}));
+    CHECK_NEAR((pos - prev).y, -3.0, 1e-4);
+}
+
+TEST("a sweeping wall does not pass through a particle") {
+    // The wall moved 12 up this step and now sits above a particle that was
+    // above it before: the particle belongs on top.
+    const Capsule wall{{0, -12}, {100, -12}, 2.0f};
+    Vec2 prev{50, -8}, pos{50, -8};
+    resolveParticleCapsule(pos, prev, 1.0f, wall, 0.0f, {0, -12});
+    CHECK(pos.y < -12.0f);
+}

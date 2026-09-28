@@ -58,3 +58,10 @@ TEST("momentum is conserved between discs of different mass") {
     CHECK_NEAR(before.x, after.x, 1e-3);
     CHECK_NEAR(before.y, after.y, 1e-3);
 }
+
+TEST("a rising wall lifts a disc resting on it") {
+    Body d = makeDisc({50, -9}, 10.0f, 2.0f);
+    const Capsule floor{{0, 0}, {100, 0}, 0.0f};
+    CHECK(collideDiscCapsule(d, floor, {0, -100}));
+    CHECK(d.vel.y <= -100.0f + 1e-3f);
+}
