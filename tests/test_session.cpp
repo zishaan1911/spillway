@@ -113,3 +113,44 @@ TEST("undo removes the most recent stroke") {
     s.undo();  // harmless when empty
     CHECK(s.strokes().empty());
 }
+
+TEST("filling the goal and holding it wins the level") {
+    Session s(cupLevel());
+    s.release();
+    runFrames(s, 60 * 6);
+    CHECK(s.state() == Session::State::Won);
+    CHECK(s.finishTime() > 0.0f);
+    CHECK(s.finishTime() < s.elapsed());
+    CHECK(s.stars() == 3);  // no ink used and well inside par
+}
+
+TEST("using more than half the ink costs a star") {
+    Session s(cupLevel());
+    s.beginStroke({100, 400});
+    s.extendStroke({300, 400});
+    s.endStroke();
+    s.release();
+    runFrames(s, 60 * 6);
+    CHECK(s.state() == Session::State::Won);
+    CHECK(s.stars() == 2);
+}
+
+TEST("water that misses the goal loses once the taps run dry") {
+    Level l = cupLevel();
+    // Deflect the stream away from the cup with a steep level wall.
+    l.walls.push_back({{560, 250}, {760, 170}, 6.0f});
+    Session s(l);
+    s.release();
+    runFrames(s, 60 * 12);
+    CHECK(s.state() == Session::State::Lost);
+    CHECK(!s.lossReason().empty());
+    CHECK(s.stars() == 0);
+}
+
+TEST("no drawing after the level is decided") {
+    Session s(cupLevel());
+    s.release();
+    runFrames(s, 60 * 6);
+    CHECK(s.state() == Session::State::Won);
+    CHECK(!s.beginStroke({300, 300}));
+}
