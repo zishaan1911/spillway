@@ -1,0 +1,19 @@
+name  Cork
+hint  A cork is stuck in the cup's mouth. Float it out.
+ink    500
+target 260
+par    10
+
+emitter 200 90   0 1   170 800 36
+
+# a basin beside the cup mouth, then the cup itself
+chain 6   480 360   480 470   632 470
+chain 6   688 470   760 470
+chain 6   560 470   560 665   760 665   760 470
+goal      567 480   186 178
+ball 660 434  34  0.3
+
+# the far side slopes away, so the freed cork drifts off
+chain 6   760 470   1100 560
+
+solution 150 250  170 300  520 335
