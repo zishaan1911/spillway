@@ -83,15 +83,14 @@ ParseResult parseLevel(const std::string& text, const std::string& id) {
             if (!need(1, 1)) return fail("par takes 1 number");
             level.par = v[0];
         } else if (key == "emitter") {
-            if (!need(7, 8)) return fail("emitter takes x y dx dy speed rate total [width]");
+            if (!need(6, 7)) return fail("emitter takes x y dx dy speed total [width]");
             EmitterDef e;
             e.pos = {v[0], v[1]};
             e.dir = normalize({v[2], v[3]});
             if (lengthSq(e.dir) == 0.0f) return fail("emitter direction is zero");
             e.speed = v[4];
-            e.rate = v[5];
-            e.total = static_cast<int>(v[6]);
-            if (v.size() == 8) e.width = v[7];
+            e.total = static_cast<int>(v[5]);
+            if (v.size() == 7) e.width = v[6];
             level.emitters.push_back(e);
         } else if (key == "wall") {
             if (!need(4, 5)) return fail("wall takes x1 y1 x2 y2 [radius]");

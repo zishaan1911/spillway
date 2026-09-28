@@ -11,7 +11,7 @@ const char* kMinimal =
     "ink 400\n"
     "target 100\n"
     "par 12.5\n"
-    "emitter 100 50  0 1  150 200 300\n"
+    "emitter 100 50  0 1  150 300\n"
     "goal 500 600 80 60\n";
 }
 
@@ -49,7 +49,7 @@ TEST("optional fields take defaults") {
 }
 
 TEST("trailing comments and windows line endings are fine") {
-    const ParseResult r = parseLevel("emitter 1 2 0 1 3 4 5 # nozzle\r\ngoal 0 0 1 1\r\ntarget 1\r\n", "t");
+    const ParseResult r = parseLevel("emitter 1 2 0 1 3 5 # nozzle\r\ngoal 0 0 1 1\r\ntarget 1\r\n", "t");
     CHECK(r.level.has_value());
 }
 
@@ -66,7 +66,7 @@ TEST("rejects bad numbers and wrong arity") {
 }
 
 TEST("rejects levels that cannot be won") {
-    CHECK(!parseLevel("goal 0 0 1 1\n", "t").level);                          // no emitter
-    CHECK(!parseLevel("emitter 1 2 0 1 3 4 5\n", "t").level);                 // no goal
-    CHECK(!parseLevel("emitter 1 2 0 1 3 4 5\ngoal 0 0 1 1\ntarget 9\n", "t").level);
+    CHECK(!parseLevel("goal 0 0 1 1\n", "t").level);             // no emitter
+    CHECK(!parseLevel("emitter 1 2 0 1 3 5\n", "t").level);      // no goal
+    CHECK(!parseLevel("emitter 1 2 0 1 3 5\ngoal 0 0 1 1\ntarget 9\n", "t").level);
 }

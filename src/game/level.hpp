@@ -12,9 +12,8 @@ struct EmitterDef {
     Vec2 pos;
     Vec2 dir{0.0f, 1.0f};
     float speed = 200.0f;
-    float rate = 240.0f;  // particles per second
     int total = 600;
-    float width = 24.0f;  // nozzle width
+    float width = 24.0f;  // nozzle width; with speed this sets the flow rate
 };
 
 struct GoalDef {
