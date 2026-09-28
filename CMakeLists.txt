@@ -19,8 +19,10 @@ else()
 endif()
 
 # Physics and game rules. No raylib in here, so the tests build anywhere.
-add_library(spillway_core INTERFACE)
-target_include_directories(spillway_core INTERFACE src)
+add_library(spillway_core STATIC
+  src/physics/particle_grid.cpp)
+target_include_directories(spillway_core PUBLIC src)
+target_compile_options(spillway_core PRIVATE ${SPILLWAY_WARNINGS})
 
 if(SPILLWAY_BUILD_TESTS)
   enable_testing()
