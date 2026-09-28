@@ -20,6 +20,7 @@ endif()
 
 # Physics and game rules. No raylib in here, so the tests build anywhere.
 add_library(spillway_core STATIC
+  src/game/level.cpp
   src/physics/collider_grid.cpp
   src/physics/contact.cpp
   src/physics/fluid.cpp
