@@ -70,3 +70,12 @@ TEST("rejects levels that cannot be won") {
     CHECK(!parseLevel("emitter 1 2 0 1 3 5\n", "t").level);      // no goal
     CHECK(!parseLevel("emitter 1 2 0 1 3 5\ngoal 0 0 1 1\ntarget 9\n", "t").level);
 }
+
+TEST("solution lines become reference strokes") {
+    const ParseResult r =
+        parseLevel(std::string(kMinimal) + "solution 0 0 10 10 20 0\nsolution 5 5 6 6\n", "t");
+    CHECK(r.level.has_value());
+    CHECK(r.level->solution.size() == 2u);
+    CHECK(r.level->solution[0].size() == 3u);
+    CHECK(!parseLevel(std::string(kMinimal) + "solution 1 2 3\n", "t").level);
+}
