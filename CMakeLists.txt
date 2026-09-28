@@ -31,8 +31,9 @@ if(SPILLWAY_BUILD_TESTS)
   enable_testing()
   add_executable(spillway_tests
     tests/main.cpp
-    tests/test_geometry.cpp
     tests/test_collider_grid.cpp
+    tests/test_contact.cpp
+    tests/test_geometry.cpp
     tests/test_particle_grid.cpp)
   target_include_directories(spillway_tests PRIVATE tests)
   target_link_libraries(spillway_tests PRIVATE spillway_core)
