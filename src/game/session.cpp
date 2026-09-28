@@ -168,6 +168,13 @@ void Session::judge() {
         return;
     }
 
+    // Water can circulate forever, say in a fan, without settling.
+    dryTimer_ += kFrameDt;
+    if (dryTimer_ >= kDryTimeout) {
+        lose("The water never made it.");
+        return;
+    }
+
     float speedSum = 0.0f;
     for (const Vec2& v : world_.fluid.vel) speedSum += length(v);
     const float meanSpeed = world_.fluid.size() ? speedSum / world_.fluid.size() : 0.0f;

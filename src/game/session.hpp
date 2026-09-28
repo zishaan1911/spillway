@@ -28,6 +28,7 @@ public:
     static constexpr float kHoldTime = 1.0f;     // goal must stay full this long
     static constexpr float kSettleTime = 2.5f;   // stillness before declaring a loss
     static constexpr float kSettleSpeed = 12.0f;
+    static constexpr float kDryTimeout = 15.0f;  // after the taps run dry
 
     explicit Session(const Level& level);
 
@@ -90,6 +91,7 @@ private:
     float holdStart_ = 0.0f;
     float finishTime_ = 0.0f;
     float stillTimer_ = 0.0f;
+    float dryTimer_ = 0.0f;
     std::string lossReason_;
 };
 
