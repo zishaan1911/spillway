@@ -23,7 +23,8 @@ add_library(spillway_core STATIC
   src/physics/collider_grid.cpp
   src/physics/contact.cpp
   src/physics/fluid.cpp
-  src/physics/particle_grid.cpp)
+  src/physics/particle_grid.cpp
+  src/physics/rigid.cpp)
 target_include_directories(spillway_core PUBLIC src)
 target_compile_options(spillway_core PRIVATE ${SPILLWAY_WARNINGS})
 
