@@ -1,0 +1,25 @@
+name  Mind the Gap
+hint  The floor has holes in it. Bridge them.
+ink    360
+target 280
+par    16
+
+emitter 150 90   0 1   170 650 36
+
+# a floor that falls towards a sunken goal, with two holes in it
+wall  40 380    40 480
+chain 6   40 480   380 527
+chain 6   480 541  700 572
+chain 6   800 586  980 611   980 700   1180 700   1180 611   1250 611
+goal      987 617   186 76
+
+# whatever falls through a hole is gone
+drain 380 600  100 120
+drain 700 630  100 90
+wall 380 527  380 700  6
+wall 480 541  480 700  6
+wall 700 572  700 700  6
+wall 800 586  800 700  6
+
+solution 360 520  500 540
+solution 680 565  820 585
