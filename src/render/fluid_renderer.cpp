@@ -12,7 +12,7 @@ namespace {
 constexpr int kBlobSize = 64;
 constexpr float kBlobRadius = 13.0f;   // world units covered by one splat
 constexpr float kSplatStrength = 0.5f;  // keeps sums below 8-bit saturation
-constexpr float kFoamSpeed = 700.0f;    // speed that renders as pure foam
+constexpr float kFoamSpeed = 1000.0f;   // speed that renders as pure foam
 constexpr float kThreshold = 0.34f;
 
 const char* kFragment = R"(#version 330
@@ -32,7 +32,7 @@ void main() {
     float speed = clamp(s.r / max(field, 1e-3), 0.0, 1.0);
     float depth = smoothstep(threshold, 1.0, field);
     vec3 col = mix(waterColor.rgb * 1.35, waterColor.rgb * 0.8, depth);
-    col = mix(col, foamColor.rgb, speed * speed);
+    col = mix(col, foamColor.rgb, smoothstep(0.35, 1.0, speed) * 0.85);
 
     float rim = 1.0 - smoothstep(threshold, threshold + 0.07, field);
     col = mix(col, foamColor.rgb, rim * 0.75);
