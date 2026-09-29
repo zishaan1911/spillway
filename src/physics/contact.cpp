@@ -24,19 +24,22 @@ bool crossesSegment(Vec2 prev, Vec2 pos, Vec2 a, Vec2 b) {
 }  // namespace
 
 bool resolveParticleCapsule(Vec2& pos, Vec2& prev, float radius, const Capsule& wall,
-                            float friction) {
+                            float friction, Vec2 surfaceDisp) {
     const float reach = wall.radius + radius;
     const Vec2 closest = closestPointOnSegment(pos, wall.a, wall.b);
     Vec2 offset = pos - closest;
     const float dist2 = lengthSq(offset);
-    const bool crossed = crossesSegment(prev, pos, wall.a, wall.b);
+    // Work in the wall's frame: where the particle was relative to the wall
+    // as it is now.
+    const Vec2 prevRel = prev + surfaceDisp;
+    const bool crossed = crossesSegment(prevRel, pos, wall.a, wall.b);
     if (dist2 >= reach * reach && !crossed) return false;
 
     Vec2 normal;
     if (crossed) {
         // Back to the side the particle came from.
         normal = normalize(perp(wall.b - wall.a));
-        if (dot(prev - wall.a, normal) < 0.0f) normal = -normal;
+        if (dot(prevRel - wall.a, normal) < 0.0f) normal = -normal;
     } else if (dist2 > 1e-12f) {
         normal = offset / std::sqrt(dist2);
     } else {
@@ -48,11 +51,11 @@ bool resolveParticleCapsule(Vec2& pos, Vec2& prev, float radius, const Capsule& 
 
     // Rewrite this step's displacement: no motion into the wall, and friction
     // on the sliding part.
-    const Vec2 disp = pos - prev;
+    const Vec2 disp = pos - prevRel;
     float along = dot(disp, normal);
     const Vec2 tangential = disp - normal * along;
     if (along < 0.0f) along = 0.0f;
-    prev = pos - (normal * along + tangential * (1.0f - friction));
+    prev = pos - surfaceDisp - (normal * along + tangential * (1.0f - friction));
     return true;
 }
 

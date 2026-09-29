@@ -113,3 +113,50 @@ TEST("light discs float and heavy discs sink") {
     CHECK(light.pos.y < surface + 18.0f);  // riding at the surface
     CHECK(heavy.pos.y > 594.0f - 30.0f);   // on the bottom
 }
+
+TEST("a sliding paddle sweeps water across a tank") {
+    World w = makeTank();
+    fillBlock(w, {215, 590}, 20, 8);
+    run(w, 2.0f);
+    Motion m;
+    m.kind = Motion::Kind::Slide;
+    m.offset = {300, 0};
+    m.period = 4.0f;
+    m.phase = 0.5f;  // movers run on world time: at rest now (t = 2), fully across at t = 4
+    w.movers.emplace_back(std::vector<Capsule>{{{230, 600}, {230, 450}, 5.0f}}, m);
+    run(w, 2.0f);
+    float meanX = 0.0f;
+    for (const Vec2& p : w.fluid.pos) meanX += p.x;
+    meanX /= static_cast<float>(w.fluid.size());
+    CHECK(meanX > 540.0f);
+    CHECK(w.escaped == 0);
+}
+
+TEST("a triggered shift moves when water arrives") {
+    World w = makeTank();
+    Motion m;
+    m.kind = Motion::Kind::Shift;
+    m.offset = {0, -200};
+    m.duration = 0.5f;
+    m.trigger = {{200, 500}, {600, 600}};
+    w.movers.emplace_back(std::vector<Capsule>{{{700, 300}, {800, 300}, 5.0f}}, m);
+    run(w, 1.0f);
+    CHECK(!w.movers[0].triggered());
+    fillBlock(w, {300, 590}, 5, 5);
+    run(w, 1.0f);
+    CHECK(w.movers[0].triggered());
+    CHECK_NEAR(w.movers[0].capsules()[0].a.y, 100.0, 1e-2);
+}
+
+TEST("a rising platform carries a ball") {
+    World w;
+    w.configure({{0, 0}, {1280, 720}}, WorldParams{}, FluidParams{});
+    Motion m;
+    m.kind = Motion::Kind::Slide;
+    m.offset = {0, -200};
+    m.period = 4.0f;
+    w.movers.emplace_back(std::vector<Capsule>{{{500, 600}, {700, 600}, 6.0f}}, m);
+    w.addDisc({600, 570}, 20.0f, 2.0f);
+    run(w, 2.0f);  // the platform is at its highest now
+    CHECK(w.bodies.items[0].pos.y < 600.0f - 200.0f);
+}

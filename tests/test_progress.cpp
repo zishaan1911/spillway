@@ -34,3 +34,21 @@ TEST("corrupt progress lines are ignored") {
     CHECK(p.get("hacked").stars == 3);
     CHECK(p.get("broken").stars == 0);
 }
+
+TEST("spills are counted per level and survive a round trip") {
+    Progress p;
+    p.addSpill("a");
+    p.addSpill("a");
+    p.addSpill("b");
+    p.record("a", 1, 9.0f);
+    const Progress q = Progress::parse(p.serialize());
+    CHECK(q.get("a").spills == 2);
+    CHECK(q.get("a").stars == 1);
+    CHECK(q.totalSpills() == 3);
+}
+
+TEST("saves from before the spill count still load") {
+    const Progress p = Progress::parse("old 2 12.5\n");
+    CHECK(p.get("old").stars == 2);
+    CHECK(p.get("old").spills == 0);
+}

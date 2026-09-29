@@ -50,6 +50,7 @@ private:
     void updateMenu();
     void updatePlay();
     void finishLevel();
+    void abandonAttempt();
 
     void updateDemo();
     void drawSession(const Session& s);

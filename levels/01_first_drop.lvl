@@ -1,13 +1,16 @@
 name  First Drop
-hint  Draw a ramp from the pipe to the cup.
-ink    800
-target 250
+hint  Just a ramp into the cup. How hard can it be?
+ink    830
+target 300
 par    9
+hold   3
 
 emitter 300 90   0 1   160 500 36
 
-# the cup
-chain 6   880 500   880 660   1010 660   1010 500
+# the cup. One of these walls is not like the others.
+chain 6   880 500   880 660   1010 660
+fake      1010 660  1010 500
 goal      887 520   116 133
 
 solution 250 260  880 470
+solution 1016 668  1016 505

@@ -1,8 +1,9 @@
 name  Cascade
-hint  Everything at once: lift it, bridge it, land it.
-ink    700
-target 300
-par    14
+hint  Everything at once: lift it, bridge it, land it. Trust nothing.
+ink    640
+target 232
+par    12
+hold   3
 
 emitter 120 90   0 1   200 900 36
 
@@ -11,17 +12,26 @@ chain 6   300 600   40 650
 zone 300 250  124 440   350 -1700
 wall 430 250  430 720  6
 
-# middle: a floor with a hole in it
+# middle: a floor with a hole in it, and another that is better hidden
 chain 6   430 480   600 510
-chain 6   680 522   860 545
+chain 6   680 522   760 532
+fake      760 532   800 538
+chain 6   800 538   860 545
 drain 600 560  80 160
+drain 760 580  40 140
 wall  600 510  600 720  6
 wall  680 522  680 720  6
+wall  760 532  760 720  6
+wall  800 538  800 720  6
 
-# right: the cup, set low
-chain 6   960 600   960 700   1120 700   1120 560
-goal      967 616   146 78
+# right: the cup, sliding along the bottom
+slide 200 0  4
+  chain 6   960 600   960 700   1120 700   1120 560
+  goal      967 616   146 78
+end
+nodraw 880 590  400 130
 
 solution 70 220   90 270   300 420
 solution 585 505  695 522
-solution 850 565  975 600
+solution 750 528  810 540
+solution 850 565  975 585

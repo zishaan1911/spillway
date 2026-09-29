@@ -1,19 +1,28 @@
 name  Overflow
 hint  Plug the leak and let the tank fill up.
 ink    200
-target 250
-par    14
+target 260
+par    11
+hold   3
 
 emitter 330 90   0 1   170 1000 36
 
 # the tank, with a hole in its floor and a spout on the right
-chain 6   240 330   240 620   300 620
+chain 6   240 330   240 620
+fake      240 620   272 620
+chain 6   272 620   300 620
 chain 6   360 620   420 620   420 500   480 480
+drain     240 640  32 80
 drain     300 640  60 80
+wall      272 620  272 720  6
 wall      300 620  300 720  6
 wall      360 620  360 720  6
-# the cup under the spout
+
+# the cup under the spout. It is not quite watertight either.
 chain 6   470 560   470 665   620 665   620 560
 goal      477 580   136 78
+drain     596 646  17 12
 
 solution 295 612  365 612
+solution 236 612  278 612
+solution 590 652  614 652

@@ -1,14 +1,21 @@
 name  Crosswind
 hint  The wind will blow the stream away unless you give it a chute.
-ink    520
-target 280
-par    6
+ink    420
+target 198
+par    5
+hold   3
 
 emitter 640 90   0 1   170 650 36
 
-zone 0 230  1280 200   2200 0
+zone 0 230  1280 180   2200 0
 
-chain 6   580 520   580 665   700 665   700 520
-goal      587 540   106 118
+# a paddle turning over the cup mouth
+spin 640 500  200
+  wall 575 500  705 500  6
+end
+nodraw 560 420  160 160
 
-solution 668 190  668 470
+chain 6   585 590   585 700   695 700   695 590
+goal      592 606   96 87
+
+solution 668 190  668 415

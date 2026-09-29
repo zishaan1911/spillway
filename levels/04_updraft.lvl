@@ -1,8 +1,9 @@
 name  Updraft
-hint  The fan can lift water. Feed it.
-ink    600
-target 260
-par    11
+hint  The fan can lift water. Mind the door.
+ink    560
+target 530
+par    10
+hold   3
 
 emitter 170 90   0 1   170 650 36
 
@@ -15,5 +16,10 @@ chain 6   760 260   760 380   1060 380   1060 120
 goal      767 290   286 84
 # the shelf's support, so water cannot sneak round the bottom
 wall 760 380  760 700  6
+
+# a door that slides across the top of the column
+slide 150 0  2.6
+  wall 590 215  690 215  7
+end
 
 solution 120 230  135 300  560 470

@@ -42,10 +42,11 @@ void RigidBodies::collidePairs() {
 namespace {
 
 // Resolves a contact where `normal` points from the obstacle towards the body
-// and `point` is where they touch. `other` may be null for static geometry.
-void contactImpulse(Body& body, Body* other, Vec2 normal, Vec2 point) {
+// and `point` is where they touch. `other` is null for walls, which move with
+// `surfaceVel` (zero for static ones).
+void contactImpulse(Body& body, Body* other, Vec2 normal, Vec2 point, Vec2 surfaceVel = {}) {
     const Vec2 vA = body.velocityAt(point);
-    const Vec2 vB = other ? other->velocityAt(point) : Vec2{};
+    const Vec2 vB = other ? other->velocityAt(point) : surfaceVel;
     const Vec2 rel = vA - vB;
     const float vn = dot(rel, normal);
     if (vn >= 0.0f) return;  // already separating
@@ -64,7 +65,7 @@ void contactImpulse(Body& body, Body* other, Vec2 normal, Vec2 point) {
 
     // Friction along the tangent, clamped to the Coulomb cone. Here the lever
     // arm is perpendicular to the tangent, so rotation does enter.
-    const Vec2 relAfter = body.velocityAt(point) - (other ? other->velocityAt(point) : Vec2{});
+    const Vec2 relAfter = body.velocityAt(point) - (other ? other->velocityAt(point) : surfaceVel);
     Vec2 tangent = relAfter - normal * dot(relAfter, normal);
     const float vt = length(tangent);
     if (vt < 1e-6f) return;
@@ -82,7 +83,7 @@ void contactImpulse(Body& body, Body* other, Vec2 normal, Vec2 point) {
 
 }  // namespace
 
-bool collideDiscCapsule(Body& body, const Capsule& wall) {
+bool collideDiscCapsule(Body& body, const Capsule& wall, Vec2 surfaceVel) {
     const Vec2 closest = closestPointOnSegment(body.pos, wall.a, wall.b);
     const Vec2 d = body.pos - closest;
     const float reach = body.radius + wall.radius;
@@ -91,7 +92,7 @@ bool collideDiscCapsule(Body& body, const Capsule& wall) {
     const float dist = std::sqrt(dist2);
     Vec2 normal = dist > 1e-6f ? d / dist : Vec2{0.0f, -1.0f};
     body.pos = closest + normal * reach;
-    contactImpulse(body, nullptr, normal, closest + normal * wall.radius);
+    contactImpulse(body, nullptr, normal, closest + normal * wall.radius, surfaceVel);
     return true;
 }
 

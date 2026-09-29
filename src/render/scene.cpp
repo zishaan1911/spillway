@@ -51,8 +51,8 @@ void drawZone(const ZoneDef& z, float time) {
     EndScissorMode();
 }
 
-void drawGoal(const GoalDef& g, float fill, float hold) {
-    const Rectangle r = toRect(g.area);
+void drawGoal(const Aabb& area, float fill, float hold) {
+    const Rectangle r = toRect(area);
     DrawRectangleRec(r, Fade(palette::kGoal, 0.07f + 0.12f * hold));
     // Progress bar along the bottom edge; it pulses while the win is confirmed.
     const float f = std::clamp(fill, 0.0f, 1.0f);
@@ -123,15 +123,24 @@ void drawBackdrop(const Session& session, float time) {
         drawHatch(n, Fade(palette::kNoDraw, 0.12f), 16.0f);
     }
     const float fill = static_cast<float>(session.inGoal()) / std::max(1, level.target);
-    for (const GoalDef& g : level.goals) drawGoal(g, fill, session.holdProgress());
+    for (size_t i = 0; i < level.goals.size(); ++i) {
+        drawGoal(session.goalArea(i), fill, session.holdProgress());
+    }
 }
 
 void drawForeground(const Session& session, float time) {
     (void)time;
     const Level& level = session.level();
+    // Everything solid-looking, including moving walls and fakes, which are
+    // deliberately indistinguishable from the real thing.
+    std::vector<Capsule> solid = level.walls;
+    solid.insert(solid.end(), level.fakes.begin(), level.fakes.end());
+    for (const Mover& m : session.world().movers) {
+        solid.insert(solid.end(), m.capsules().begin(), m.capsules().end());
+    }
     // Walls get a lighter outline pass first so joints read as one shape.
-    for (const Capsule& c : level.walls) drawCapsule({c.a, c.b, c.radius + 1.5f}, palette::kWallEdge);
-    for (const Capsule& c : level.walls) drawCapsule(c, palette::kWall);
+    for (const Capsule& c : solid) drawCapsule({c.a, c.b, c.radius + 1.5f}, palette::kWallEdge);
+    for (const Capsule& c : solid) drawCapsule(c, palette::kWall);
     for (const Stroke& s : session.strokes()) {
         for (size_t i = 1; i < s.points.size(); ++i) {
             drawCapsule({s.points[i - 1], s.points[i], Session::kStrokeRadius}, palette::kStroke);

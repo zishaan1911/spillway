@@ -37,11 +37,31 @@ Body& World::addDisc(Vec2 pos, float radius, float relativeDensity) {
 void World::step(float frameDt) {
     const int n = params_.substeps > 0 ? params_.substeps : 1;
     const float dt = frameDt / static_cast<float>(n);
+    triggerMovers();
     for (int i = 0; i < n; ++i) substep(dt);
     removeLostParticles();
 }
 
+void World::updateMovers(float dt) {
+    time_ += dt;
+    for (Mover& m : movers) m.update(time_);
+}
+
+void World::triggerMovers() {
+    for (Mover& m : movers) {
+        if (m.motion().kind != Motion::Kind::Shift || m.triggered()) continue;
+        for (const Vec2& p : fluid.pos) {
+            if (m.motion().trigger.contains(p)) {
+                m.trigger(time_);
+                break;
+            }
+        }
+    }
+}
+
 void World::substep(float dt) {
+    updateMovers(dt);
+
     // Bodies first, so the fluid sees where they are this step.
     for (Body& b : bodies.items) {
         for (const ForceZone& z : zones) {
@@ -51,6 +71,13 @@ void World::substep(float dt) {
     bodies.integrate(dt, params_.gravity, params_.bodyLinearDamping, params_.bodyAngularDamping);
     bodies.collidePairs();
     bodies.collideStatic(walls_);
+    for (const Mover& m : movers) {
+        for (Body& b : bodies.items) {
+            for (const Capsule& c : m.capsules()) {
+                collideDiscCapsule(b, c, m.velocityAt(closestPointOnSegment(b.pos, c.a, c.b)));
+            }
+        }
+    }
 
     for (size_t i = 0; i < fluid.size(); ++i) {
         Vec2 accel = params_.gravity;
@@ -76,6 +103,11 @@ void World::collideParticles(float dt) {
         colliderGrid_.forEachCandidate(pos, [&](uint32_t w) {
             resolveParticleCapsule(pos, prev, r, walls_[w], params_.wallFriction);
         });
+        for (const Mover& m : movers) {
+            for (const Capsule& c : m.capsules()) {
+                resolveParticleCapsule(pos, prev, r, c, params_.wallFriction, m.velocityAt(pos) * dt);
+            }
+        }
         for (Body& b : bodies.items) {
             resolveParticleDisc(pos, prev, r, kParticleMass, b, params_.bodyFriction, dt);
         }

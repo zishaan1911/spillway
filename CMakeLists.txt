@@ -24,9 +24,11 @@ add_library(spillway_core STATIC
   src/game/level.cpp
   src/game/progress.cpp
   src/game/session.cpp
+  src/game/taunt.cpp
   src/physics/collider_grid.cpp
   src/physics/contact.cpp
   src/physics/fluid.cpp
+  src/physics/mover.cpp
   src/physics/particle_grid.cpp
   src/physics/rigid.cpp
   src/physics/world.cpp)
@@ -43,10 +45,12 @@ if(SPILLWAY_BUILD_TESTS)
     tests/test_geometry.cpp
     tests/test_level.cpp
     tests/test_levels.cpp
+    tests/test_mover.cpp
     tests/test_particle_grid.cpp
     tests/test_progress.cpp
     tests/test_rigid.cpp
     tests/test_session.cpp
+    tests/test_taunt.cpp
     tests/test_world.cpp)
   target_include_directories(spillway_tests PRIVATE tests)
   target_compile_definitions(spillway_tests PRIVATE

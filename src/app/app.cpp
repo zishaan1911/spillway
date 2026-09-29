@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "game/taunt.hpp"
 #include "render/scene.hpp"
 #include "rlgl.h"
 
@@ -90,6 +91,7 @@ bool App::unlocked(size_t index) const {
 }
 
 void App::startLevel(size_t index) {
+    abandonAttempt();
     current_ = index;
     session_ = std::make_unique<Session>(levels_[index]);
     screen_ = Screen::Play;
@@ -111,7 +113,10 @@ void App::applyPending() {
         case Action::None: break;
         case Action::Resume: paused_ = false; break;
         case Action::Restart: startLevel(current_); break;
-        case Action::Menu: screen_ = Screen::Menu; break;
+        case Action::Menu:
+            abandonAttempt();
+            screen_ = Screen::Menu;
+            break;
         case Action::Start: startLevel(pendingLevel_); break;
     }
 }
@@ -264,6 +269,10 @@ void App::drawMenu() {
     const float starW = ui::measure(starText, 24).x + 30;
     ui::star({kWidth * 0.5f - starW * 0.5f + 10, 196}, 11, true, palette::kStroke);
     ui::text(starText, kWidth * 0.5f - starW * 0.5f + 28, 184, 24, palette::kText);
+    if (progress_.totalSpills() > 0) {
+        std::snprintf(starText, sizeof starText, "%d spills", progress_.totalSpills());
+        ui::textCentered(starText, kWidth * 0.5f, 214, 20, palette::kDrain);
+    }
     const int cols = 5;
     const float w = 200, h = 110, gap = 24;
     const float x0 = (kWidth - (cols * w + (cols - 1) * gap)) * 0.5f;
@@ -275,8 +284,12 @@ void App::drawMenu() {
         if (ui::button(r, "", mouse_, clicked_, open)) request(Action::Start, i);
         ui::text(label, r.x + 14, r.y + 10, 30, open ? palette::kStroke : palette::kMuted);
         ui::text(levels_[i].name.c_str(), r.x + 14, r.y + 46, 20, open ? palette::kText : palette::kMuted);
-        ui::stars({r.x + r.width * 0.5f, r.y + h - 20}, 9, progress_.get(levels_[i].id).stars, 3,
-                  palette::kStroke);
+        const LevelRecord rec = progress_.get(levels_[i].id);
+        ui::stars({r.x + r.width * 0.5f, r.y + h - 20}, 9, rec.stars, 3, palette::kStroke);
+        if (rec.spills > 0) {
+            std::snprintf(label, sizeof label, "%d", rec.spills);
+            ui::textRight(label, r.x + r.width - 14, r.y + 14, 20, palette::kDrain);
+        }
     }
 
     float y = 540;
@@ -338,9 +351,20 @@ void App::updatePlay() {
 void App::finishLevel() {
     recorded_ = true;
     const Session& s = *session_;
-    if (s.state() != Session::State::Won) return;
-    newBest_ = progress_.record(s.level().id, s.stars(), s.finishTime());
+    if (s.state() == Session::State::Won) {
+        newBest_ = progress_.record(s.level().id, s.stars(), s.finishTime());
+    } else {
+        progress_.addSpill(s.level().id);
+    }
     progress_.save(progressPath_);
+}
+
+// Walking away once the water is running counts as a spill too.
+void App::abandonAttempt() {
+    if (!session_ || session_->state() != Session::State::Flowing) return;
+    progress_.addSpill(session_->level().id);
+    progress_.save(progressPath_);
+    session_.reset();
 }
 
 void App::drawPlay() {
@@ -399,7 +423,7 @@ void App::drawHud() {
     if (s.state() == Session::State::Planning) {
         const char* msg = l.hint.empty() ? "Draw with the left mouse button." : l.hint.c_str();
         ui::textCentered(msg, kWidth * 0.5f, kHeight - 70, 22, palette::kText);
-        ui::textCentered("SPACE opens the taps   RMB erase   Z undo   R restart   F1 physics view",
+        ui::textCentered("SPACE opens the taps (no erasing after that)   RMB erase   Z undo   R restart",
                          kWidth * 0.5f, kHeight - 40, 18, palette::kMuted);
     }
 }
@@ -428,9 +452,14 @@ void App::drawResult() {
         std::snprintf(buf, sizeof buf, "%.1fs  (par %.0fs)     ink %.0f%%", s.finishTime(), s.level().par,
                       100.0f * s.inkUsed() / std::max(1.0f, s.level().ink));
         ui::textCentered(buf, cx, panel.y + 160, 22, palette::kText);
-        if (newBest_) ui::textCentered("new best", cx, panel.y + 190, 20, palette::kStroke);
+        const std::string quip = winQuip(progress_.get(s.level().id).spills);
+        if (!quip.empty()) ui::textCentered(quip.c_str(), cx, panel.y + 192, 20, palette::kMuted);
+        if (newBest_) ui::textCentered("new best", cx, panel.y + 218, 20, palette::kStroke);
     } else {
-        ui::textCentered(s.lossReason().c_str(), cx, panel.y + 120, 22, palette::kText);
+        const int spills = progress_.get(s.level().id).spills;
+        ui::textCentered(taunt(s, spills).c_str(), cx, panel.y + 112, 24, palette::kText);
+        std::snprintf(buf, sizeof buf, "spill #%d on this level", spills);
+        ui::textCentered(buf, cx, panel.y + 156, 20, palette::kMuted);
     }
 
     const float by = panel.y + panel.height - 76;

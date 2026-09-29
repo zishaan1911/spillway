@@ -12,9 +12,13 @@ namespace spill {
 // pushed back to the side it came from rather than the nearer side, which
 // stops fast particles tunnelling through thin walls.
 //
+// For a moving wall, `surfaceDisp` is how far the wall's surface moved this
+// step; the response is then computed relative to the wall, so a paddle
+// carries water along with it.
+//
 // Returns true if the particle was touching the capsule.
 bool resolveParticleCapsule(Vec2& pos, Vec2& prev, float radius, const Capsule& wall,
-                            float friction);
+                            float friction, Vec2 surfaceDisp = {});
 
 struct Body;
 

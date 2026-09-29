@@ -83,7 +83,7 @@ TEST("a click without a drag leaves no stroke") {
     CHECK(s.inkUsed() == 0.0f);
 }
 
-TEST("erasing a stroke refunds its ink and removes its walls") {
+TEST("erasing a stroke removes its walls but not what it cost") {
     Session s(cupLevel());
     s.beginStroke({300, 300});
     s.extendStroke({400, 300});
@@ -94,7 +94,7 @@ TEST("erasing a stroke refunds its ink and removes its walls") {
     CHECK(!s.eraseAt({350, 350}));  // nowhere near either stroke
     CHECK(s.eraseAt({350, 305}));
     CHECK(s.strokes().size() == 1u);
-    CHECK_NEAR(s.inkUsed(), 50.0, 1e-3);
+    CHECK_NEAR(s.inkUsed(), 150.0, 1e-3);
     CHECK(s.world().walls().size() == 3u + 5u);
 }
 
@@ -108,7 +108,7 @@ TEST("undo removes the most recent stroke") {
     s.endStroke();
     s.undo();
     CHECK(s.strokes().size() == 1u);
-    CHECK_NEAR(s.inkUsed(), 100.0, 1e-3);
+    CHECK_NEAR(s.inkUsed(), 150.0, 1e-3);
     s.undo();
     s.undo();  // harmless when empty
     CHECK(s.strokes().empty());
@@ -143,8 +143,10 @@ TEST("water that misses the goal loses once the taps run dry") {
     s.release();
     runFrames(s, 60 * 12);
     CHECK(s.state() == Session::State::Lost);
+    CHECK(s.loss() != Session::Loss::None);
     CHECK(!s.lossReason().empty());
     CHECK(s.stars() == 0);
+    CHECK(s.peakInGoal() < l.target);
 }
 
 TEST("no drawing after the level is decided") {
@@ -174,6 +176,7 @@ TEST("water kept moving forever still ends the level") {
     s.release();
     for (int i = 0; i < 60 * 30 && s.state() == Session::State::Flowing; ++i) s.update();
     CHECK(s.state() == Session::State::Lost);
+    CHECK(s.loss() == Session::Loss::NeverArrived);
 }
 
 TEST("strokes cannot be drawn through a ball") {
@@ -185,4 +188,47 @@ TEST("strokes cannot be drawn through a ball") {
     s.extendStroke({500, 300});
     CHECK(!s.drawing());
     CHECK(s.strokes()[0].points.back().x < 400.0f - 20.0f);
+}
+
+TEST("a goal riding on a slide is counted where it is now") {
+    const ParseResult r = parseLevel(
+        "ink 300\ntarget 10\n"
+        "emitter 640 100  0 1  200 150\n"
+        "slide 400 0 4\n"
+        "  chain 6  600 500  600 640  680 640  680 500\n"
+        "  goal 606 520 68 114\n"
+        "end\n",
+        "moving");
+    Session s(*r.level);
+    for (int i = 0; i < 120; ++i) s.update();  // 2 s: halfway through the period
+    CHECK_NEAR(s.goalArea(0).min.x, 606.0 + 400.0, 1e-2);
+    CHECK(s.world().walls().empty());
+    CHECK(s.world().movers.size() == 1u);
+}
+
+TEST("hold time comes from the level") {
+    Level l = cupLevel();
+    l.hold = 3.0f;
+    Session s(l);
+    s.release();
+    int framesFull = 0;
+    while (s.state() == Session::State::Flowing && framesFull < 60 * 20) {
+        s.update();
+        if (s.inGoal() >= l.target) ++framesFull;
+    }
+    CHECK(s.state() == Session::State::Won);
+    CHECK(framesFull >= 179);
+}
+
+TEST("no erasing or undo once the taps are open") {
+    Session s(cupLevel());
+    s.beginStroke({300, 300});
+    s.extendStroke({400, 300});
+    s.endStroke();
+    s.release();
+    CHECK(!s.eraseAt({350, 300}));
+    s.undo();
+    CHECK(s.strokes().size() == 1u);
+    // Drawing more is still allowed, while the ink lasts.
+    CHECK(s.beginStroke({300, 400}));
 }

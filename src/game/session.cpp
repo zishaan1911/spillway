@@ -12,6 +12,7 @@ Session::Session(const Level& level) : level_(level) {
     for (const Aabb& d : level_.drains) world_.drains.push_back({d});
     for (const ZoneDef& z : level_.zones) world_.zones.push_back({z.area, z.accel});
     for (const BallDef& b : level_.balls) world_.addDisc(b.pos, b.radius, b.density);
+    for (const MoverDef& m : level_.movers) world_.movers.emplace_back(m.walls, m.motion);
     rebuildWalls();
 }
 
@@ -37,12 +38,6 @@ bool Session::canDrawAt(Vec2 p) const {
         if (length(p - b.pos) < b.radius + kStrokeRadius) return false;
     }
     return true;
-}
-
-float Session::inkUsed() const {
-    float used = 0.0f;
-    for (const Stroke& s : strokes_) used += s.length;
-    return used;
 }
 
 bool Session::beginStroke(Vec2 p) {
@@ -71,6 +66,7 @@ void Session::extendStroke(Vec2 p) {
         }
         s.points.push_back(next);
         s.length += step;
+        inkSpent_ += step;
         changed = true;
     }
     if (changed) rebuildWalls();
@@ -97,7 +93,7 @@ void Session::drawPolyline(const std::vector<Vec2>& points) {
 }
 
 bool Session::eraseAt(Vec2 p, float reach) {
-    if (drawing_ || state_ == State::Won || state_ == State::Lost) return false;
+    if (drawing_ || state_ != State::Planning) return false;
     int best = -1;
     float bestDist = reach + kStrokeRadius;
     for (size_t k = 0; k < strokes_.size(); ++k) {
@@ -117,7 +113,7 @@ bool Session::eraseAt(Vec2 p, float reach) {
 }
 
 void Session::undo() {
-    if (drawing_ || strokes_.empty() || state_ == State::Won || state_ == State::Lost) return;
+    if (drawing_ || strokes_.empty() || state_ != State::Planning) return;
     strokes_.pop_back();
     rebuildWalls();
 }
@@ -126,11 +122,20 @@ void Session::release() {
     if (state_ == State::Planning) state_ = State::Flowing;
 }
 
+Aabb Session::goalArea(size_t i) const {
+    const GoalDef& g = level_.goals[i];
+    if (g.mover < 0) return g.area;
+    const Vec2 t = world_.movers[static_cast<size_t>(g.mover)].translation();
+    return {g.area.min + t, g.area.max + t};
+}
+
 int Session::countInGoals() const {
+    std::vector<Aabb> areas;
+    for (size_t i = 0; i < level_.goals.size(); ++i) areas.push_back(goalArea(i));
     int count = 0;
     for (const Vec2& p : world_.fluid.pos) {
-        for (const GoalDef& g : level_.goals) {
-            if (g.area.contains(p)) {
+        for (const Aabb& a : areas) {
+            if (a.contains(p)) {
                 ++count;
                 break;
             }
@@ -148,14 +153,17 @@ void Session::update() {
     // and before release so balls can come to rest.
     world_.step(kFrameDt);
     inGoal_ = countInGoals();
-    if (state_ == State::Flowing) judge();
+    if (state_ == State::Flowing) {
+        peakInGoal_ = std::max(peakInGoal_, inGoal_);
+        judge();
+    }
 }
 
 void Session::judge() {
     if (inGoal_ >= level_.target) {
         if (holdTimer_ == 0.0f) holdStart_ = elapsed_;
         holdTimer_ += kFrameDt;
-        if (holdTimer_ >= kHoldTime) {
+        if (holdTimer_ >= level_.hold) {
             finishTime_ = holdStart_;
             state_ = State::Won;
             if (drawing_) endStroke();
@@ -169,14 +177,14 @@ void Session::judge() {
     if (!tapsEmpty) return;
 
     if (static_cast<int>(world_.fluid.size()) < level_.target) {
-        lose("Not enough water left to fill the goal.");
+        lose(Loss::NotEnoughWater, "Not enough water left to fill the goal.");
         return;
     }
 
     // Water can circulate forever, say in a fan, without settling.
     dryTimer_ += kFrameDt;
     if (dryTimer_ >= kDryTimeout) {
-        lose("The water never made it.");
+        lose(Loss::NeverArrived, "The water never made it.");
         return;
     }
 
@@ -184,11 +192,12 @@ void Session::judge() {
     for (const Vec2& v : world_.fluid.vel) speedSum += length(v);
     const float meanSpeed = world_.fluid.size() ? speedSum / world_.fluid.size() : 0.0f;
     stillTimer_ = meanSpeed < kSettleSpeed ? stillTimer_ + kFrameDt : 0.0f;
-    if (stillTimer_ >= kSettleTime) lose("The water has settled short of the goal.");
+    if (stillTimer_ >= kSettleTime) lose(Loss::Settled, "The water has settled short of the goal.");
 }
 
-void Session::lose(std::string reason) {
+void Session::lose(Loss loss, std::string reason) {
     state_ = State::Lost;
+    loss_ = loss;
     lossReason_ = std::move(reason);
     if (drawing_) endStroke();
 }

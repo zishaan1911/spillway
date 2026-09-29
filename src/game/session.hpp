@@ -20,12 +20,12 @@ struct Stroke {
 class Session {
 public:
     enum class State { Planning, Flowing, Won, Lost };
+    enum class Loss { None, NotEnoughWater, Settled, NeverArrived };
 
     static constexpr float kFrameDt = 1.0f / 60.0f;
     static constexpr Aabb kArena{{0.0f, 0.0f}, {1280.0f, 720.0f}};
     static constexpr float kStrokeRadius = 5.0f;
     static constexpr float kStrokeStep = 10.0f;  // distance between stroke points
-    static constexpr float kHoldTime = 1.0f;     // goal must stay full this long
     static constexpr float kSettleTime = 2.5f;   // stillness before declaring a loss
     static constexpr float kSettleSpeed = 12.0f;
     static constexpr float kDryTimeout = 15.0f;  // after the taps run dry
@@ -54,20 +54,28 @@ public:
     void drawPolyline(const std::vector<Vec2>& points);
     bool drawing() const { return drawing_; }
     const std::vector<Stroke>& strokes() const { return strokes_; }
-    // Removes the stroke passing nearest to p (within reach), refunding its ink.
+    // Removes the stroke passing nearest to p (within reach). No take-backs:
+    // erasing and undo only work before the taps open, and the ink a stroke
+    // cost is never refunded.
     bool eraseAt(Vec2 p, float reach = 12.0f);
     void undo();
-    float inkUsed() const;
-    float inkLeft() const { return level_.ink - inkUsed(); }
+    float inkUsed() const { return inkSpent_; }
+    float inkLeft() const { return level_.ink - inkSpent_; }
+
+    // Where goal i is right now; goals can ride on movers.
+    Aabb goalArea(size_t i) const;
 
     int inGoal() const { return inGoal_; }
     float elapsed() const { return elapsed_; }
 
     // 0..1 while the goal is full and the win is being confirmed.
-    float holdProgress() const { return holdTimer_ / kHoldTime; }
+    float holdProgress() const { return holdTimer_ / level_.hold; }
     // Time from release until the goal first filled, for the winning fill.
     float finishTime() const { return finishTime_; }
     const std::string& lossReason() const { return lossReason_; }
+    Loss loss() const { return loss_; }
+    // Most water that was ever in the goal at once, for rubbing it in.
+    int peakInGoal() const { return peakInGoal_; }
 
     // One star for finishing, one for using at most half the ink, one for
     // beating par. Zero unless the level is won.
@@ -77,13 +85,14 @@ private:
     void rebuildWalls();
     int countInGoals() const;
     void judge();
-    void lose(std::string reason);
+    void lose(Loss loss, std::string reason);
 
     Level level_;
     World world_;
     std::vector<Emitter> emitters_;
     std::vector<Stroke> strokes_;
     bool drawing_ = false;
+    float inkSpent_ = 0.0f;
     State state_ = State::Planning;
     int inGoal_ = 0;
     float elapsed_ = 0.0f;
@@ -93,6 +102,8 @@ private:
     float stillTimer_ = 0.0f;
     float dryTimer_ = 0.0f;
     std::string lossReason_;
+    Loss loss_ = Loss::None;
+    int peakInGoal_ = 0;
 };
 
 }  // namespace spill
